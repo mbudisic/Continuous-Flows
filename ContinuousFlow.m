@@ -14,37 +14,55 @@ classdef (Abstract) ContinuousFlow
   methods (Abstract)
 
     [ t, x ] = traj(obj, x0, T, t0)
-    % Compute trajectory from t0 -> t0 + T
-    % x0  - initial conditions, each row is an i.c.
+    %TRAJ Compute trajectory from t0 -> t0 + T
+    % [ t, x ] = traj(obj, x0, T, t0)
+    %
+    % x0  - initial conditions, each column is an i.c.
     % T  - duration of time
     % t0 - initial time
     %
     % Returns:
-    % t  - column-vector of time instances
+    % t  - row-vector of time instances
     % x  - set of trajectories
-    %      1st ind - time index
-    %      2st ind - dimension of state
+    %      1st ind - dimension of state
+    %      2st ind - time index
     %      3rd ind - trajectory
 
     [ x ] = flow(obj, x0, T, t0)
-    % Evaluate flow map from t0 -> t0 + T
-    % x0  - initial conditions, each row is an i.c.
+    %FLOW Evaluate flow map from t0 -> t0 + T
+    % [ x ] = flow(obj, x0, T, t0)
+    %
+    % x0  - initial conditions, each column is an i.c.
     % T   - duration of time
     % t0  - initial time
     %
     % Returns:
-    % t   - column-vector of time instances
     % x   - set of points, of the same shape as x0
 
-    [ J ] = jacobian( obj, t, x )
-    % Compute Jacobian of the vector field along
+    [ f ] = vf( obj, t, x )
+    % VF Compute vector field along a trajectory
     % a single trajectory given by (t, x)
+    % [ f ] = vf( obj, t, x )
     %
-    % t   - column vector of times
+    % t   - row-vector of times
     % x   - trajectory
-    %     - rows correspond to time steps
-    %     - columns correspond to states
+    %     - columns correspond to time steps
+    %     - rows correspond to states
     %
+    % Returns:
+    % f   - evaluation of the vector field
+    %     - each f(:,i) is a dim x 1 vector field evaluation
+    %     - of the vector field at [ t(i), x(i,:) ] point
+
+    [ J ] = jacobian( obj, t, x )
+    % JACOBIAN Compute Jacobian of the vector field along
+    % a single trajectory given by (t, x)
+    % [ J ] = jacobian( obj, t, x )
+    %
+    % t   - row-vector of times
+    % x   - trajectory
+    %     - columns correspond to time steps
+    %     - rows correspond to states
     % Returns:
     % J   - Jacobians
     %     - each J(:,:,i) is a dim x dim Jacobian matrix
