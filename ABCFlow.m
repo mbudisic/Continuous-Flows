@@ -139,11 +139,16 @@ classdef ABCFlow < dynamics.ContinuousFlow
     %      2st ind - time index
     %      3rd ind - trajectory
 
+    % decide if full trajectory is returned or just the last point
       fulltraj = nargout == 2;
 
+      if nargin < 4
+        t0 = 0;
+      end
+
+      % initialize output structures
       M = size(x0, 1);
       N = size(x0, 2);
-
       if fulltraj
         t = ( t0:obj.dt:(t0+T) );
         L = numel(t);
@@ -154,10 +159,10 @@ classdef ABCFlow < dynamics.ContinuousFlow
         x = nan( M, N );
       end
 
+      %%
+      % Integrate initial conditions
       for n = 1:N
-
         sol = obj.integrator( @obj.vf, [t0, t0+T], x0(:,n), obj.intprops );
-
         if fulltraj
           % record full trajectory
           x(:,:, n) = deval( sol, t );
@@ -165,9 +170,10 @@ classdef ABCFlow < dynamics.ContinuousFlow
           % record just last point
           x(:,n) = sol.y(:,end);
         end
-
       end
 
+      %%
+      % Assign outputs
       varargout{1} = x;
       if fulltraj
         varargout{2} = t;
