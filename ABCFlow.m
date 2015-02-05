@@ -50,12 +50,12 @@ classdef ABCFlow < dynamics.ContinuousFlow
       params = num2cell(params);
       [obj.A, obj.B, obj.C, obj.D] = deal(params{:});
 
-      %% Set up integration
-      obj.integrator = @ode23;
+      %% Set up integration parameters
+      obj.integrator = @ode23t;
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
       obj.intprops = odeset(obj.intprops, 'Jacobian', @(t,x)obj.jacobian(t,x) );
-      obj.intprops = odeset(obj.intprops, 'Stats','on' );
+      %      obj.intprops = odeset(obj.intprops, 'Stats','on' );
 
     end
 
@@ -73,7 +73,7 @@ classdef ABCFlow < dynamics.ContinuousFlow
     %     - each f(:,i) is a dim x 1 vector field evaluation
     %     - of the vector field at [ t(i), x(i,:) ] point
 
-      % periodicity on the [0,1]^3 cube
+    % periodicity on the [0,1]^3 cube
       x = 2*pi*x;
 
       tcoeff = obj.A + obj.D*t.*sin(pi*t);
@@ -124,10 +124,10 @@ classdef ABCFlow < dynamics.ContinuousFlow
 
     end
 
-    function [ t, x ] = traj(obj, x0, T, t0)
+    function [ varargout ] = flow(obj, x0, T, t0)
     % TRAJ Compute trajectory from t0 -> t0 + T
     %
-    % [ t, x ] = obj.traj(x0, T, t0)
+    % [ x, t ] = obj.traj(x0, T, t0)
     % x0  - initial conditions, each column is an i.c.
     % T  - duration of time
     % t0 - initial time
@@ -139,37 +139,38 @@ classdef ABCFlow < dynamics.ContinuousFlow
     %      2st ind - time index
     %      3rd ind - trajectory
 
-      t = ( t0:obj.dt:(t0+T) );
-      L = numel(t);
+      fulltraj = nargout == 2;
+
       M = size(x0, 1);
       N = size(x0, 2);
-      x = nan( M, L, N );
+
+      if fulltraj
+        t = ( t0:obj.dt:(t0+T) );
+        L = numel(t);
+        x = nan( M, L, N );
+      else
+        M = size(x0, 1);
+        N = size(x0, 2);
+        x = nan( M, N );
+      end
 
       for n = 1:N
 
-        [~,y] = obj.integrator( @obj.vf, t, x0(:,n), obj.intprops );
-        x(:,:, n) = y.';
+        sol = obj.integrator( @obj.vf, [t0, t0+T], x0(:,n), obj.intprops );
+
+        if fulltraj
+          % record full trajectory
+          x(:,:, n) = deval( sol, t );
+        else
+          % record just last point
+          x(:,n) = sol.y(:,end);
+        end
 
       end
 
-    end
-
-    function [ x ] = flow(obj, x0, T, t0)
-    % Evaluate flow map from t0 -> t0 + T
-    % x0  - initial conditions, each column is an i.c.
-    % T   - duration of time
-    % t0  - initial time
-    %
-    % Returns:
-    % x   - set of points, of the same shape as x0
-
-      M = size(x0, 1);
-      N = size(x0, 2);
-      x = nan( M, N );
-
-      for n = 1:N
-        [~,y] = obj.integrator( @obj.vf, [t0, t0+T], x0(:,n), obj.intprops );
-        x(:,n) = y(end,:).';
+      varargout{1} = x;
+      if fulltraj
+        varargout{2} = t;
       end
 
     end

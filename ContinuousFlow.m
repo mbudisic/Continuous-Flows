@@ -13,31 +13,24 @@ classdef (Abstract) ContinuousFlow
 
   methods (Abstract)
 
-    [ t, x ] = traj(obj, x0, T, t0)
+    [ varargout ] = flow(obj, x0, T, t0)
     %TRAJ Compute trajectory from t0 -> t0 + T
-    % [ t, x ] = traj(obj, x0, T, t0)
+    % [ t, x ] = flow(obj, x0, T, t0)
+    %    [ x ] = flow(obj, x0, T, t0)
     %
     % x0  - initial conditions, each column is an i.c.
     % T  - duration of time
     % t0 - initial time
     %
-    % Returns:
+    % If only one output is requested, returns:
+    % x   - set of points, of the same shape as x0
+    %
+    % If two outputs are requested, returns
     % t  - row-vector of time instances
     % x  - set of trajectories
     %      1st ind - dimension of state
     %      2st ind - time index
     %      3rd ind - trajectory
-
-    [ x ] = flow(obj, x0, T, t0)
-    %FLOW Evaluate flow map from t0 -> t0 + T
-    % [ x ] = flow(obj, x0, T, t0)
-    %
-    % x0  - initial conditions, each column is an i.c.
-    % T   - duration of time
-    % t0  - initial time
-    %
-    % Returns:
-    % x   - set of points, of the same shape as x0
 
     [ f ] = vf( obj, t, x )
     % VF Compute vector field along a trajectory
