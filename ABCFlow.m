@@ -74,7 +74,7 @@ classdef ABCFlow < dynamics.ContinuousFlow
     %     - of the vector field at [ t(i), x(i,:) ] point
 
     % periodicity on the [0,1]^3 cube
-      x = 2*pi*x;
+    %      x = 2*pi*x;
 
       tcoeff = obj.A + obj.D*t.*sin(pi*t);
       f(1,:) = tcoeff .* sin(x(3,:)) + obj.C .* cos(x(2,:));
@@ -82,7 +82,7 @@ classdef ABCFlow < dynamics.ContinuousFlow
       f(3,:) = obj.C*sin(x(2,:)) + obj.B*cos(x(1,:));
 
       % periodicity on the [0,1]^3 cube
-      f = f/(2*pi);
+      %      f = f/(2*pi);
 
     end
 
@@ -114,7 +114,7 @@ classdef ABCFlow < dynamics.ContinuousFlow
       J(1,2,:) = -obj.C * sin( x(2,:) );
       J(1,3,:) =  tcoeff .* cos( x(3,:) );
 
-      J(2,1,:) = -obj.B * cos( x(1,:) );
+      J(2,1,:) =  obj.B * cos( x(1,:) );
       J(2,2,:) =  zeros(1,1,L);
       J(2,3,:) = -tcoeff .* sin( x(3,:) );
 
