@@ -24,7 +24,7 @@ classdef ABCFlow < dynamics.ContinuousFlow
 
     function obj = ABCFlow( dt, params )
     %ABCFLOW Construct an ABC flow object.
-    %
+    % ABCFlow( dt, params )
     % Params can be:
     %
     % -- 1 x 4 vector of coefficients [A,B,C,D]
