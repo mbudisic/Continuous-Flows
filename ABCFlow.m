@@ -5,7 +5,7 @@
 % dy = B sin(x) + ( A + D t sin( pi t ) ) cos(z)
 % dz = C sin(y) + B cos(x)
 
-classdef ABCFlow < ODEFlow
+classdef ABCFlow < ContinuousFlows.ODEFlow
 
   properties
     % parameters for the flow

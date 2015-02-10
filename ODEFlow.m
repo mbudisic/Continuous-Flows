@@ -3,7 +3,7 @@
 %  system".
 %
 
-classdef (Abstract) ODEFlow < ContinuousFlow
+classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
 
   properties
     integrator

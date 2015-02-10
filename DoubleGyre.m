@@ -2,7 +2,7 @@
 %  Planar double-gyre system, as used by Shadden (2005)
 %
 
-classdef DoubleGyre < ODEFlow
+classdef DoubleGyre < ContinuousFlows.ODEFlow
 
   properties
     A
