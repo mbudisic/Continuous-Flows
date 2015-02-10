@@ -1,0 +1,112 @@
+%DOUBLEGYRE
+%  Planar double-gyre system, as used by Shadden (2005)
+%
+
+classdef DoubleGyre < ODEFlow
+
+  properties
+    A
+    omega
+    epsilon
+  end
+
+  methods
+
+    function obj = DoubleGyre( dt, params )
+    %DOUBLEGYRE Construct a Double Gyre object.
+    % DoubleGyre( dt, params )
+    % Params can be
+    %
+    % -- 1 x 3 vector of coefficients [A,omega, epsilon]
+    % -- 'standard' - parameter set [0.1, 2*pi/10, 0.25]
+
+      obj.dt = dt;
+      if ischar( params )
+        switch params
+          case 'standard'
+            params = [0.1, 2*pi/10, 0.25];
+          otherwise
+            error('Unknown parameter set');
+        end
+      end
+
+      params = num2cell(params);
+      [obj.A, obj.omega, obj.epsilon] = deal(params{:});
+
+      %% Set up integration parameters
+      obj.integrator = @ode23t;
+      obj.intprops = odeset;
+      obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
+      obj.intprops = odeset(obj.intprops, 'Jacobian', @(t,x)obj.jacobian(t,x) );
+      %      obj.intprops = odeset(obj.intprops, 'Stats','on' );
+
+    end
+
+    function [ f ] = vf( obj, t, x )
+    % VF Compute vector field along a trajectory
+    % a single trajectory given by (t, x)
+    % [ f ] = vf( obj, t, x )
+    %
+    % t   - row-vector of times
+    % x   - trajectory
+    %     - columns correspond to time steps
+    %     - rows correspond to states
+    %
+    % Returns:
+    % f   - evaluation of the vector field
+    %     - each f(:,i) is a dim x 1 vector field evaluation
+    %     - of the vector field at [ t(i), x(i,:) ] point
+
+    %%
+    % Time-varying coefficients
+      a = obj.epsilon .* sin( obj.omega * t );
+      b = 1 - 2 * a;
+
+      F1 = a.*x(1,:).^2 + b.*x(1,:);
+      F2 = 2*a.*x(1,:) + b;
+
+      %%
+      % Velocity field
+      f(1,:) = -pi*obj.A*sin(pi*F1) .* cos(pi*x(2,:));
+      f(2,:) =  pi*obj.A*cos(pi*F1) .* sin(pi*x(2,:)).*F2;
+    end
+
+    function [ J ] = jacobian( obj, t, x )
+    % JACOBIAN Compute Jacobian of the vector field along
+    % a single trajectory given by (t, x)
+    % [ J ] = jacobian( obj, t, x )
+    %
+    % t   - row-vector of times
+    % x   - trajectory
+    %     - columns correspond to time steps
+    %     - rows correspond to states
+    % Returns:
+    % J   - Jacobians
+    %     - each J(:,:,i) is a dim x dim Jacobian matrix
+    %     - of the vector field at [ t(i), x(i,:) ] point
+
+      assert( ismatrix(x) );
+      L = size(x,2);
+      assert( numel(t) == 1 || numel(t) == L, ...
+              ['Time is either a scalar or'...
+               'has to match number of steps'] );
+    %%
+    % Time-varying coefficients
+      a = obj.epsilon .* sin( obj.omega * t );
+      b = 1 - 2 * a;
+
+      F1 = a.*x(1,:).^2 + b.*x(1,:);
+      F2 = 2*a.*x(1,:) + b;
+
+      J(1,1,:) = (-pi^2*obj.A)*cos(pi*F1).*cos(pi*x(2,:) ).*F2;
+      J(1,2,:) = (pi^2*obj.A)*sin(pi*F1).*sin(pi*x(2,:));
+      J(2,1,:) = (-pi^2*obj.A)*sin(pi*F1).*sin(pi*x(2,:)).*F2.^2 ...
+          + (2*pi*obj.A*a).*cos(pi*F1).*sin(pi*x(2,:));
+      J(2,2,:) = (pi^2*obj.A).*cos(pi*F1).*cos(pi*x(2,:)).*F2;
+
+
+    end
+
+  end
+
+end

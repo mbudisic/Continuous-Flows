@@ -5,7 +5,7 @@
 % dy = B sin(x) + ( A + D t sin( pi t ) ) cos(z)
 % dz = C sin(y) + B cos(x)
 
-classdef ABCFlow < dynamics.ContinuousFlow
+classdef ABCFlow < ODEFlow
 
   properties
     % parameters for the flow
@@ -13,11 +13,6 @@ classdef ABCFlow < dynamics.ContinuousFlow
     B
     C
     D
-  end
-
-  properties (SetAccess = private )
-    integrator
-    intprops
   end
 
   methods
@@ -109,7 +104,6 @@ classdef ABCFlow < dynamics.ContinuousFlow
 
       tcoeff = obj.A + obj.D*t.*sin(pi*t);
 
-      % scaling the domain does not change the jacobian
       J(1,1,:) =  zeros(1,1,L);
       J(1,2,:) = -obj.C * sin( x(2,:) );
       J(1,3,:) =  tcoeff .* cos( x(3,:) );
@@ -121,63 +115,6 @@ classdef ABCFlow < dynamics.ContinuousFlow
       J(3,1,:) = -obj.B * sin( x(1,:) );
       J(3,2,:) =  obj.C * cos( x(2,:) );
       J(3,3,:) =  zeros(1,1,L);
-
-    end
-
-    function [ varargout ] = flow(obj, x0, T, t0)
-    % TRAJ Compute trajectory from t0 -> t0 + T
-    %
-    % [ x, t ] = obj.traj(x0, T, t0)
-    % x0  - initial conditions, each column is an i.c.
-    % T  - duration of time
-    % t0 - initial time
-    %
-    % Returns:
-    % t  - row-vector of time instances
-    % x  - set of trajectories
-    %      1st ind - dimension of state
-    %      2st ind - time index
-    %      3rd ind - trajectory
-
-    % decide if full trajectory is returned or just the last point
-      fulltraj = nargout == 2;
-
-      if nargin < 4
-        t0 = 0;
-      end
-
-      % initialize output structures
-      M = size(x0, 1);
-      N = size(x0, 2);
-      if fulltraj
-        t = ( t0:obj.dt:(t0+T) );
-        L = numel(t);
-        x = nan( M, L, N );
-      else
-        M = size(x0, 1);
-        N = size(x0, 2);
-        x = nan( M, N );
-      end
-
-      %%
-      % Integrate initial conditions
-      for n = 1:N
-        sol = obj.integrator( @obj.vf, [t0, t0+T], x0(:,n), obj.intprops );
-        if fulltraj
-          % record full trajectory
-          x(:,:, n) = deval( sol, t );
-        else
-          % record just last point
-          x(:,n) = sol.y(:,end);
-        end
-      end
-
-      %%
-      % Assign outputs
-      varargout{1} = x;
-      if fulltraj
-        varargout{2} = t;
-      end
 
     end
 
