@@ -104,9 +104,38 @@ classdef DoubleGyre < ODEFlow
           + (2*pi*obj.A*a).*cos(pi*F1).*sin(pi*x(2,:));
       J(2,2,:) = (pi^2*obj.A).*cos(pi*F1).*cos(pi*x(2,:)).*F2;
 
-
     end
 
+    function [varargout] = quiver( obj, t, N )
+    %QUIVER Vector field of the flow.
+    %
+    % Produce vector field of the flow in 2*N x N points
+    % at time t.
+    %
+    % QUIVER(obj, t, N)
+    %   Plots the vector field at time t on grid of N x N points.
+    % h = QUIVER(obj, t, N)
+    %   As above, and returns graphics handle of the quiver object.
+    % [X,Y,U,V] = QUIVER(obj, t, N)
+    %   Returns spatial points and components of the vector field.
+
+
+      [X,Y] = meshgrid(linspace(0,2,N), ...
+                       linspace(0,1,N) );
+      f = obj.vf(t, [X(:),Y(:)].');
+      U = reshape(f(1,:), size(X));
+      V = reshape(f(2,:), size(Y));
+
+      if nargout > 1
+        varargout = {X,Y,U,V};
+      else
+        h = quiver(X,Y,U,V);
+        if nargout > 0
+          varargout = h;
+        end
+      end
+
+    end
   end
 
 end

@@ -118,6 +118,38 @@ classdef ABCFlow < ODEFlow
 
     end
 
+    function [varargout] = quiver( obj, t, N )
+    %QUIVER Vector field of the flow.
+    %
+    % Produce vector field of the flow on the grid of N x N x N points at time
+    % t.
+    %
+    % QUIVER(obj, t, N)
+    %   Plots the vector field at time t on grid of N x N x N points.
+    % h = QUIVER(obj, t, N)
+    %   As above, and returns graphics handle of the quiver object.
+    % [X,Y,Z,U,V,W] = QUIVER(obj, t, N)
+    %   Returns spatial points and components of the vector field.
+    %
+
+      [X,Y,Z] = meshgrid(linspace(0,2*pi,N));
+      f = obj.vf(t, [X(:),Y(:), Z(:)].');
+      U = reshape(f(1,:), size(X));
+      V = reshape(f(2,:), size(Y));
+      W = reshape(f(3,:), size(Y));
+
+      if nargout > 1
+        varargout = {X,Y,Z,U,V,W};
+      else
+        h = quiver3(X,Y,Z,U,V,W);
+        if nargout > 0
+          varargout = h;
+        end
+      end
+
+    end
+
+
   end
 
 end
