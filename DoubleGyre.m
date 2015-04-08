@@ -24,7 +24,7 @@ classdef DoubleGyre < ContinuousFlows.ODEFlow
       if ischar( params )
         switch params
           case 'standard'
-            params = [0.1, 2*pi/10, 0.25];
+            params = [0.1, 2*pi, 0.25]; % frequency == 1
           otherwise
             error('Unknown parameter set');
         end
