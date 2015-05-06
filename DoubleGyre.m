@@ -18,7 +18,7 @@ classdef DoubleGyre < ContinuousFlows.ODEFlow
     % Params can be
     %
     % -- 1 x 3 vector of coefficients [A,omega, epsilon]
-    % -- 'standard' - parameter set [0.1, 2*pi/10, 0.25]
+    % -- 'standard' - parameter set [0.1, 2*pi, 0.25]
 
       obj.dt = dt;
       if ischar( params )
