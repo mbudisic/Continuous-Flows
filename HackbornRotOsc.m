@@ -18,7 +18,7 @@
 % $$\Lambda(x,t) = (x + x^2/2) \cos(\lambda t)
 
 
-classdef HackbornRotOsc < ContinuousFlows.ODEFlow
+classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
 
   properties
     %% flow properties
@@ -59,25 +59,6 @@ classdef HackbornRotOsc < ContinuousFlows.ODEFlow
       % quadw - row vector
       [obj.quadk,obj.quadw] = ContinuousFlows.lgwt(N, 0, 50);
 
-    end
-
-    function [ f ] = vf( obj, t, x )
-    % VF Compute the vector field along a single
-    % trajectory given by (t, x)
-    % [ f ] = vf( obj, t, x )
-    %
-    % t   - row-vector of times
-    % x   - trajectory
-    %     - columns correspond to time steps
-    %     - rows correspond to states
-    %
-    % Returns:
-    % f   - evaluation of the vector field
-    %     - each f(:,i) is a dim x 1 vector field evaluation
-    %     - of the vector field at [ t(i), x(i,:) ] point
-
-    % system is Hamiltonian (has a stream function)
-      f = [0 -1; 1 0] * obj.Psi(x,t,1);
     end
 
     function [out] = Psi( obj, x, t, order )
@@ -121,8 +102,8 @@ classdef HackbornRotOsc < ContinuousFlows.ODEFlow
           dFY(sel) = 0;
         end
         out = [dFX; dFY];
-        warning('Need to implement test for consistency of Jacobian')
-        warning('Need to implement abstract 2d Hamiltonian')
+        %        warning('Need to implement test for consistency of Jacobian')
+        %        warning('Need to implement abstract 2d Hamiltonian')
       elseif order == 2
         Den = 8.*(Cneg.*Cpos).^2/pi^2;
         SinX2 = sin(pi.*X/2);
@@ -243,73 +224,6 @@ classdef HackbornRotOsc < ContinuousFlows.ODEFlow
       end
     end
 
-    function [varargout] = quiver( obj, t, xi, yi )
-    %QUIVER Vector field of the flow.
-    %
-    % Produce vector field of the flow at time t on the tensor product grid
-    % xi XX yi
-    %
-    % QUIVER(obj, t, xi, yi)
-    %   Plots the vector field at time t on a tensor grid xi XX yi
-    % h = QUIVER(obj, t, xi, yi)
-    %   As above, and returns graphics handle of the quiver object.
-    % [X,Y,U,V] = QUIVER(obj, t, xi, yi)
-    %   Returns spatial points and components of the vector field.
-
-      [X,Y] = meshgrid(xi, yi);
-      f = obj.vf(t, [X(:),Y(:)].');
-
-      U = reshape(f(1,:), size(X));
-      V = reshape(f(2,:), size(Y));
-
-      if nargout > 1
-        varargout = {X,Y,U,V};
-      else
-        h = quiver(X,Y,U,V);
-        if nargout > 0
-          varargout = h;
-        end
-      end
-
-    end
-
-    function [varargout] = stream( obj, t, xi, yi)
-    %QUIVER Vector field of the flow.
-    %
-    % Produce vector field of the flow at time t on the tensor product grid
-    % xi XX yi
-    %
-    % QUIVER(obj, t, xi, yi)
-    %   Plots the vector field at time t on a tensor grid xi XX yi
-    % h = QUIVER(obj, t, xi, yi)
-    %   As above, and returns graphics handle of the quiver object.
-    % [X,Y,U,V] = QUIVER(obj, t, xi, yi)
-    %   Returns spatial points and components of the vector field.
-
-      [X,Y] = meshgrid(xi, yi);
-
-      x = [X(:),Y(:)].';
-
-      Psiv = reshape(obj.Psi(x,t,0),size(X));
-
-      if nargout > 1
-        varargout = {X,Y,Psiv};
-      else
-        levels = linspace(prctile(Psiv(:), 10), max(Psiv(:)),10);
-        levels = unique( [0,levels]);
-        [C,h] = contourf(X,Y,Psiv,levels); shading flat;
-        set(gca,'Color',repmat(0.7,[1,3]));
-        if nargout > 0
-          varargout = h;
-        end
-      end
-
-    end
-
-
-    function jacobian( obj, t, x )
-      pass
-    end
 
   end
 
