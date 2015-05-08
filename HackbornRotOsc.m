@@ -67,9 +67,18 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
     %
     %  second derivatives are sorted as
     %  [xx; xy; yy]
+
+
+    % out = obj.Phi(x,order);
+    % out = obj.Gamma(x,order);
+    %    out = obj.Lambda(t,x,order);
+
     out = obj.Phi(x,order) + ...
           obj.Gamma(x,order) + ...
           obj.epsilon * obj.Lambda(t,x,order);
+
+    out = obj.Phi(x,order);
+
     end
 
     function [out] = Phi( obj, x, order )
@@ -80,9 +89,6 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
     %  [xx; xy; yy]
 
       C = obj.c;
-      Nx = size(x,2);
-
-      x
 
       X = x(1,:);
       Y = x(2,:);
@@ -138,19 +144,24 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
       C = obj.c;
       Nx = size(x,2);
 
-      persistent CoshK SinhK TanhK CothK CoshCK SinhCK DenNeg DenPos
+      persistent CoshK SinhK TanhK CothK CoshCK SinhCK K2 Pp Pn
 
       if isempty(CoshK)
         CoshK = cosh(obj.quadk);
         SinhK = sinh(obj.quadk);
         TanhK = tanh(obj.quadk);
         CothK = coth(obj.quadk);
+
         CoshCK = cosh(C*obj.quadk);
-        SinhCK = sinh(C*obj.quadk);
-        DenNeg = obj.quadk - CoshK.*SinhK;
-        DenPos = obj.quadk + CoshK.*SinhK;
-        min(abs(DenNeg))
-        min(abs(DenPos))
+        SinhCK = sinh(C*obj.quadk)
+
+        Sinh2K = sinh(2*obj.quadk);
+
+        Pp = 2*CoshCK./(Sinh2K + 2*obj.quadk);
+        Pn = 2*SinhCK./(Sinh2K - 2*obj.quadk);
+
+        K2 = obj.quadk.^2;
+
       end
 
       out = zeros(order+1, Nx);
@@ -163,40 +174,41 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
         SinhKX = sinh(obj.quadk*X);
 
         % zeroth-order terms
-        g = SinhCK .* (X .* CoshKX - CothK .* SinhKX ) ./ DenNeg ...
-            - CoshCK.*(X .* SinhKX - CoshKX .* TanhK) ./ DenPos;
+        G = Pp .* (TanhK .* CoshKX - X.*SinhKX) + Pn.*(CothK.*SinhKX - X.*CoshKX);
+
+        KY = obj.quadk.*Y;
+        CosKY = cos(KY);
 
         if order == 0
-          out(n) = obj.quadw * (g.*cos(obj.quadk*Y));
+          out(n) = obj.quadw * (G.*CosKY);
           continue;
         end
 
-        % first-order terms
-        gx = SinhCK.*(CoshKX - obj.quadk.*CoshKX.*CothK)./DenNeg - ...
-             CoshCK.*(SinhKX - obj.quadk.*SinhKX.*TanhK)./DenPos;
+        SinKY = sin(KY);
 
-        KY = obj.quadk.*Y;
+        % first-order terms
+        Gx = CoshKX.*(-Pn - obj.quadk.*(Pp.*X - Pn.*CothK)) + ...
+             SinhKX.*(-Pp - obj.quadk.*(Pn.*X - Pp.*TanhK));
+
         if order == 1
           % Gauss-Legendre integral as an inner product with weight row-vector
-          out(1,n) = obj.quadw * (gx.* cos(KY));
-          out(2,n) = -obj.quadw * (g .* obj.quadk.*sin(KY));
+          out(1,n) = obj.quadw * (Gx.* CosKY);
+          out(2,n) = -obj.quadw * (G .* obj.quadk.*SinKY);
           continue;
         end
 
         % order == 2
         if order == 2
 
-          K2 = obj.quadk.^2;
-          gxx = K2 .* ( -CothK .* SinhCK .* SinhKX ./ DenNeg + ...
-                        CoshCK .* CoshKX .* TanhK ./ DenPos );
+          Gxx = -2*obj.quadk.*(Pp.*CoshKX + Pn.*SinhKX) + ...
+                K2.* (-Pn.*X.*CoshKX - Pp.*X.*SinhKX + Pn.*CothK.*SinhKX + Pp.*CoshKX.*TanhK);
 
           %Gamma_xx
-          out(1,n) = obj.quadw * (gxx.* cos(KY));
+          out(1,n) = obj.quadw * (Gxx.* cos(KY));
           %Gamma_xy
-          out(2,n) = -obj.quadw * (gx .* obj.quadk.*sin(KY));
+          out(2,n) = -obj.quadw * (Gx .* obj.quadk.*sin(KY));
           %Gamma_yy
-          out(3,n) = -obj.quadw * (g.* K2 .*cos(KY));
-
+          out(3,n) = -obj.quadw * (G.* K2 .*cos(KY));
           continue;
         end
 
@@ -220,10 +232,10 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
       if order == 0
         out = ( x(1,:) + x(1,:).^2 / 2 ) .* cos(obj.lambda * t );
       elseif order == 1
-        out = [zeros(1,Nx); ...
-               ( 1 + x(1,:) ) .* cos(obj.lambda*t ) ];
+        out = [( 1 + x(1,:) ) .* cos(obj.lambda*t );
+               zeros(1,Nx) ];
       else
-        out = [zeros(2,Nx); cos(obj.lambda*t) ];
+        out = [cos(obj.lambda*t); zeros(2,Nx)];
       end
     end
 
