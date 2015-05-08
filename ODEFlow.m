@@ -28,7 +28,7 @@ classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
     %      3rd ind - trajectory
 
     % decide if full trajectory is returned or just the last point
-      fulltraj = nargout == 2;
+      fulltraj = nargout >= 2;
 
       if nargin < 4
         t0 = 0;
@@ -47,10 +47,27 @@ classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
         x = nan( M, N );
       end
 
+      % timing included
+      if nargout >= 3
+        timeme = true;
+        timings = zeros(1,N);
+      else
+        timeme = false;
+      end
+
       %%
       % Integrate initial conditions
       for n = 1:N
+        fprintf('Computing initial condition %d\n',n)
+        disp(x0(:,n));
+        if timeme
+          tic;
+        end
         sol = obj.integrator( @obj.vf, [t0, t0+T], x0(:,n), obj.intprops );
+        if timeme
+          timings(n) = toc;
+        end
+
         if fulltraj
           % record full trajectory
           x(:,:, n) = deval( sol, t );
@@ -58,6 +75,7 @@ classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
           % record just last point
           x(:,n) = sol.y(:,end);
         end
+        fprintf(1,'Initial condition %d computed\n', n);
       end
 
       %%
@@ -65,6 +83,9 @@ classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
       varargout{1} = x;
       if fulltraj
         varargout{2} = t;
+      end
+      if timeme
+        varargout{3} = timings;
       end
 
     end

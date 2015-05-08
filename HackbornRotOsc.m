@@ -1,10 +1,21 @@
 %%HACKBORNROTOSC
 % Hackborn Rotor-Oscillator flow -- Hackborn et al., JFM, (1997)
 %
-% Flow domain is [-1, 1] x [-ymax, ymax]. In theory, ymax -> infinity. In
-% practice, ymax of 4 and more is sufficient.
+% The flow evolves in the channel [-1,1] x [-inf, inf] although
+% practically [-1,1] x [-4, 4] is enough for common parameters
 %
-% Part of the velocity field is evaluated at a grid and then interpolated.
+% Stream function $\Psi(x,y,t)$ is given by three components:
+% $$ \Psi(x,y,t) = \Phi(x,y) + \Gamma(x,y) + \epsilon \Lambda(x,t) $$
+%
+% $$ \Phi(x,y) = (1/2) \log \frac{\cosh(\pi y/2) - \cos[\pi(x-c)/2]}{\cosh(\pi
+% y/2) + \cos[\pi(x+c)/2]} $$
+%
+% $$ \Gamma(x,y) = \int_0^\infty \cos(k y) G(x,k) $$
+% where
+% $$ G(x,k) = ... $$
+%
+% and
+% $$\Lambda(x,t) = (x + x^2/2) \cos(\lambda t)
 
 
 classdef HackbornRotOsc < ContinuousFlows.ODEFlow
@@ -15,42 +26,38 @@ classdef HackbornRotOsc < ContinuousFlows.ODEFlow
     lambda  % frequency of wall oscillation
     c       % rotor location (between -1 and 1)
 
-    %% discretization properties
-    ymax    % length of the channel (larger than 1)
-
     %% quadrature
     quadk   % coordinate points
     quadw   % weights
+
   end
 
 
   methods
 
-    function obj = HackbornRotOsc( dt, flowp, ymax )
+    function obj = HackbornRotOsc( dt, flowp )
     %HACKBORNROTOSC Construct a Hackborn Rotor-Oscillator flow
     % HackbornRotOsc( dt, params )
     %
     % dt    time discretization step
     % flowp is a 1 x 3 vector of flow parameters [epsilon, lambda, c]
-    % ymax  is a scalar determining the height of the domain
 
       obj.dt = dt;
 
       flowp = num2cell(flowp);
       [obj.epsilon, obj.lambda, obj.c] = deal(flowp{:});
-      obj.ymax = ymax;
 
       %% Set up integration parameters
-      obj.integrator = @ode45;
+      obj.integrator = @ode23t;
       obj.intprops = odeset;
-      obj.intprops = odeset(obj.intprops, 'Vectorized','off');
+      obj.intprops = odeset(obj.intprops, 'Vectorized','on');
 
-      %% Generate Gauss-Legendre points on 0-1 interval
+      %% Gauss-Legendre points and weights
+      % on the k = [0,100] interval
       N = 100;
-      [Quadk,Quadw] = lgwt(N, 0, 50);
-
-      obj.quadk = Quadk(:).';
-      obj.quadw = Quadw(:).';
+      % quadk - column vector
+      % quadw - row vector
+      [obj.quadk,obj.quadw] = ContinuousFlows.lgwt(N, 0, 50);
 
     end
 
@@ -69,85 +76,189 @@ classdef HackbornRotOsc < ContinuousFlows.ODEFlow
     %     - each f(:,i) is a dim x 1 vector field evaluation
     %     - of the vector field at [ t(i), x(i,:) ] point
 
-    % Non-autonomous term
-      nonaut = obj.epsilon*(1 + x(1,:)).*cos(obj.lambda*t);
-
-      % Autonomous-term
-      dF = obj.DlogF( x );
-      dG = obj.DG(x);
-      f = [0 -1; 1 0] * (dF+dG);
-
-      % Full vector field (time dep. comes only in y coordinate)
-      f(2,:) = f(2,:) + nonaut;
-
+    % system is Hamiltonian (has a stream function)
+      f = [0 -1; 1 0] * obj.Psi(x,t,1);
     end
 
-    function [dG] = DG(obj, x)
-    %DG Indefinite-integral term in the autonomous stream function
+    function [out] = Psi( obj, x, t, order )
+    %% Time-varying stream function
+    %  Change order to return either value, first, or second derivatives
+    %
+    %  second derivatives are sorted as
+    %  [xx; xy; yy]
+    out = obj.Phi(x,order) + ...
+          obj.Gamma(x,order) + ...
+          obj.epsilon * obj.Lambda(x,t,order);
+    end
 
-      [X,K] = meshgrid( x(1,:), obj.quadk );
-      [Y,~] = meshgrid( x(2,:), obj.quadk );
+    function [out] = Phi( obj, x, order )
+    %% Closed-form (logarithmic) static term in stream function
+    %  Change order to return either value, first, or second derivatives
+    %
+    %  second derivatives are sorted as
+    %  [xx; xy; yy]
 
       C = obj.c;
+      Nx = size(x,2);
 
-      g = (2*cosh(K*C)./(sinh(2*K) + 2*K)) .* ...
-          ( tanh(K) .* cosh(K.*X) - X.* sinh(K.*X) ) + ...
-          (2*sinh(K*C)./(sinh(2*K) - 2*K)) .* ...
-          ( coth(K) .* sinh(K.*X) - X.* cosh(K.*X) ) ;
+      X = x(1,:);
+      Y = x(2,:);
 
-      gx = (2*cosh(K*C)./(sinh(2*K) + 2*K)) .* ...
-           ( K.*tanh(K) .* sinh(K.*X) - K.*X.* cosh(K.*X) - sinh(K.*X) ) + ...
-           (2*sinh(K*C)./(sinh(2*K) - 2*K)) .* ...
-           ( K.*coth(K) .* cosh(K.*X) - K.*X.* sinh(K.*X) - cosh(K.*X) );
+      CpiY = cosh(pi*Y/2);
+      Cneg = cos(pi*(C-X)/2) - CpiY;
+      Cpos = cos(pi*(C+X)/2) + CpiY;
 
-      Gx =  obj.quadw * (gx.*    cos(K.*Y)); % weighted sum as an inner product
-                                           % with weight row-vector
-      Gy = -obj.quadw * (g .* K.*sin(K.*Y));
+      if order == 0
+        out = log( -Cneg/Cpos )/2;
+      elseif order == 1
+        Den = Cneg.*Cpos;
+        dFX =  (pi/4).*( sin(C.*pi)-2.*cos(C.*pi/2).*cosh(pi.*Y/2).*sin(pi.*X/2) )./Den;
+        dFY = -(pi/2).*( cos(C.*pi/2).*cos(pi.*X/2).*sinh(pi.*Y/2) )./Den;
 
-      dG = [Gx; Gy];
-      assert( all(size(dG) == size(x)) );
+        sel = abs(X-C) < 1e-7 & abs(Y) < 1e-7;
+        if any(sel)
+          dFX(sel) = (pi/4) * tan(C*pi/2);
+          dFY(sel) = 0;
+        end
+        out = [dFX; dFY];
+        warning('Need to implement test for consistency of Jacobian')
+        warning('Need to implement abstract 2d Hamiltonian')
+      elseif order == 2
+        Den = 8.*(Cneg.*Cpos).^2/pi^2;
+        SinX2 = sin(pi.*X/2);
+        CosX = cos(pi.*X);
+        CoshY = cosh(pi.*Y);
+
+        dFXX = cos(C.*pi/2).* cos(pi.*X/2) .* ...
+               (cosh(pi.*Y/2).*(-3+cos(C.*pi) + CosX + CoshY) + 4.*sin(C.*pi/2).*SinX2)...
+               / Den;
+        dFYY = -dFXX;
+
+        dFXY = ( cos(C.*pi/2).*SinX2.*SinhY2.*(-3+cos(C.*pi) - CosX - CoshY) + ...
+               sin(C.*pi).*SinhY ) ./ Den;
+
+        out = [dFXX; dFXY; dFYY];
+
+      else
+        error('Orders > 2 not implemented');
+      end
 
     end
 
-    function [dF] = DlogF( obj, x )
-    %DLOGF Closed-form term in the autonomous stream function
-
-    % The term in question is 0.5 * log(F)
-    % where F can be written as F = (A - B) / (A+B)
-    % which in turn means that
+    function [out] = Gamma( obj, x, order )
+    %% Integral static term in stream function
+    %  Change order to return either value, first, or second derivatives
     %
-    % d log(F)/2 = (A * dA - B * dB)/(A^2 - B^2)
+    %  second derivatives are sorted as
+    %  [xx; xy; yy]
 
-    C = obj.c;
+      C = obj.c;
+      Nx = size(x,2);
 
-    y = x(2,:);
-    x = x(1,:);
+      persistent CoshK SinhK TanhK CothK CoshCK SinhCK DenNeg DenPos
 
-    Den = ( cos(pi.*(C-x)/2)-cosh(pi.*y/2) ) .* ( cos(pi.*(C+x)/2)+cosh(pi.*y/2) );
+      if isempty(CoshK)
+        CoshK = cosh(obj.quadk);
+        SinhK = sinh(obj.quadk);
+        TanhK = tanh(obj.quadk);
+        CothK = coth(obj.quadk);
+        CoshCK = cosh(C*obj.quadk);
+        SinhCK = sinh(C*obj.quadk);
+        DenNeg = obj.quadk - CoshK.*SinhK;
+        DenPos = obj.quadk + CoshK.*SinhK;
+        min(abs(DenNeg))
+        min(abs(DenPos))
+      end
 
-    dFx =  (pi/4).*( sin(C.*pi)-2.*cos(C.*pi/2).*cosh(pi.*y/2).*sin(pi.*x/2) )./Den;
-    dFy = -(pi/2).*( cos(C.*pi/2).*cos(pi.*x/2).*sinh(pi.*y/2) )./Den;
+      out = zeros(order+1, Nx);
+      for n = 1:Nx
 
-    dF = [dFx; dFy];
+        X = x(1,n);
+        Y = x(2,n);
+
+        CoshKX = cosh(obj.quadk*X);
+        SinhKX = sinh(obj.quadk*X);
+
+        % zeroth-order terms
+        g = SinhCK .* (X .* CoshKX - CothK .* SinhKX ) ./ DenNeg ...
+            - CoshCK.*(X .* SinhKX - CoshKX .* TanhK) ./ DenPos;
+
+        if order == 0
+          out(n) = obj.quadw * (g.*cos(obj.quadk*Y));
+          continue;
+        end
+
+        % first-order terms
+        gx = SinhCK.*(CoshKX - obj.quadk.*CoshKX.*CothK)./DenNeg - ...
+             CoshCK.*(SinhKX - obj.quadk.*SinhKX.*TanhK)./DenPos;
+
+        if order == 1
+          KY = obj.quadk.*Y;
+
+          % Gauss-Legendre integral as an inner product with weight row-vector
+          out(1,n) = obj.quadw * (gx.* cos(KY));
+          out(2,n) = -obj.quadw * (g .* obj.quadk.*sin(KY));
+          continue;
+        end
+
+        % order == 2
+        if order == 2
+
+          K2 = obj.quadk.^2;
+          gxx = K2 ( -CothK .* SinhCK .* SinhKX ./ DenNeg + ...
+                     CoshCK .* CoshKX .* TanhK ./ DenPos );
+
+          %Gamma_xx
+          out(1,n) = obj.quadw * (gxx.* cos(KY));
+          %Gamma_xy
+          out(2,n) = -obj.quadw * (gx .* obj.quadk.*sin(KY));
+          %Gamma_yy
+          out(3,n) = -obj.quadw * (g.* K2 .*cos(KY));
+
+          continue;
+        end
+
+        error('Higher orders not implemented');
+
+
+      end
 
     end
 
-    function [varargout] = quiver( obj, t, N )
+    function [out] = Lambda( obj, x, t, order )
+    %% Time-varying term in stream function
+    %  Change order to return either value, first, or second derivatives
+    %
+    %  second derivatives are sorted as
+    %  [xx; xy; yy]
+
+      Nx = size(x,2);
+      if order == 0
+        out = ( x(1,:) + x(1,:).^2 / 2 ) .* cos(obj.lambda * t );
+      elseif order == 1
+        out = [zeros(1,Nx); ...
+               ( 1 + x(1,:) ) .* cos(obj.lambda*t ) ];
+      else
+        out = [zeros(2,Nx); cos(obj.lambda*t) ];
+      end
+    end
+
+    function [varargout] = quiver( obj, t, xi, yi )
     %QUIVER Vector field of the flow.
     %
-    % Produce vector field of the flow in 2*N x N points
-    % at time t.
+    % Produce vector field of the flow at time t on the tensor product grid
+    % xi XX yi
     %
-    % QUIVER(obj, t, N)
-    %   Plots the vector field at time t on grid of N x N points.
-    % h = QUIVER(obj, t, N)
+    % QUIVER(obj, t, xi, yi)
+    %   Plots the vector field at time t on a tensor grid xi XX yi
+    % h = QUIVER(obj, t, xi, yi)
     %   As above, and returns graphics handle of the quiver object.
-    % [X,Y,U,V] = QUIVER(obj, t, N)
+    % [X,Y,U,V] = QUIVER(obj, t, xi, yi)
     %   Returns spatial points and components of the vector field.
 
-      [X,Y] = meshgrid(linspace(-1,1,N), ...
-                       linspace(-obj.ymax,obj.ymax,N) );
+      [X,Y] = meshgrid(xi, yi);
       f = obj.vf(t, [X(:),Y(:)].');
+
       U = reshape(f(1,:), size(X));
       V = reshape(f(2,:), size(Y));
 
@@ -155,6 +266,39 @@ classdef HackbornRotOsc < ContinuousFlows.ODEFlow
         varargout = {X,Y,U,V};
       else
         h = quiver(X,Y,U,V);
+        if nargout > 0
+          varargout = h;
+        end
+      end
+
+    end
+
+    function [varargout] = stream( obj, t, xi, yi)
+    %QUIVER Vector field of the flow.
+    %
+    % Produce vector field of the flow at time t on the tensor product grid
+    % xi XX yi
+    %
+    % QUIVER(obj, t, xi, yi)
+    %   Plots the vector field at time t on a tensor grid xi XX yi
+    % h = QUIVER(obj, t, xi, yi)
+    %   As above, and returns graphics handle of the quiver object.
+    % [X,Y,U,V] = QUIVER(obj, t, xi, yi)
+    %   Returns spatial points and components of the vector field.
+
+      [X,Y] = meshgrid(xi, yi);
+
+      x = [X(:),Y(:)].';
+
+      Psiv = reshape(obj.Psi(x,t,0),size(X));
+
+      if nargout > 1
+        varargout = {X,Y,Psiv};
+      else
+        levels = linspace(prctile(Psiv(:), 10), max(Psiv(:)),10);
+        levels = unique( [0,levels]);
+        [C,h] = contourf(X,Y,Psiv,levels); shading flat;
+        set(gca,'Color',repmat(0.7,[1,3]));
         if nargout > 0
           varargout = h;
         end
