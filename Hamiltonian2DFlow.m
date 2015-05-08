@@ -101,18 +101,16 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
       assert( Nx == 1, 'Single point x has to be provided');
       assert( numel(t) == 1, 'Single point t has to be provided');
 
-      % analytic calculation
+      %% analytic derivative
       aPsiD = obj.Psi( t, x, o );
 
-      % numeric calculation
+      %% central difference
       stencil = eye(2)*delta;
       xi = [bsxfun(@plus, x, stencil), ...
             bsxfun(@minus, x, stencil) ];
 
       ti = repmat( t, [1, size(xi,2)] );
-
       nPsi = obj.Psi( ti, xi, o-1 );
-
       nPsiD = ( nPsi( :, 1:2) - nPsi( :, 3:4) )/(2*delta);
 
       if size(nPsiD,1) == 1
@@ -124,7 +122,7 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
         nPsiD = [nPsiD1,nPsiD2];
       end
 
-      % compute the error
+      %% compute the error
       err = bsxfun( @minus, aPsiD, nPsiD );
     end
 
