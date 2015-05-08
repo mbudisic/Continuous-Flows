@@ -64,4 +64,55 @@ classdef (Abstract) ContinuousFlow
   end
 
 
+  methods
+
+    function err = testJacobian( obj, t, x, delta )
+    %TESTJACOBIAN Compute difference between numeric and analytic
+    %             Jacobian matrix.
+    %
+    % The intended use is to verify correctness of analytic expressions
+    % of the Jacobian matrix.
+    %
+    % err = obj.testJacobian(t,x)
+    %
+    % Compute the difference between obj.jacobian and second-order central
+    % difference of obj.vf at a single space-time point (t,x).
+    %
+    % err = obj.testJacobian(..., delta)
+    %
+    % Use spatial step delta in central difference (default: 1e-6)
+    %
+
+      if nargin < 4
+        delta = 1e-6;
+      end
+
+      Nx = size(x,2);
+      D  = size(x,1);
+
+      assert( Nx == 1, 'Single point x has to be provided');
+      assert( numel(t) == 1, 'Single point t has to be provided');
+
+      %% analytic jacobian
+      aJ = obj.jacobian( t, x );
+
+      %% central difference
+      stencil = eye(D)*delta;
+      xi = [bsxfun(@plus, x, stencil), ...
+            bsxfun(@minus, x, stencil) ];
+      ti = repmat( t, [1, size(xi,2)] );
+
+      % vector field at stencil points
+      v = obj.vf(ti, xi);
+
+      % central difference step
+      nJ = ( v(:,1:D) - v(:,(D+1):end) )/(2*delta);
+
+      err = aJ-nJ;
+
+    end
+
+  end
+
+
 end
