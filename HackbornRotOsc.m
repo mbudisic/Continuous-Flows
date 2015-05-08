@@ -5,7 +5,7 @@
 % practically [-1,1] x [-4, 4] is enough for common parameters
 %
 % Stream function $\Psi(x,y,t)$ is given by three components:
-% $$ \Psi(x,y,t) = \Phi(x,y) + \Gamma(x,y) + \epsilon \Lambda(x,t) $$
+% $$ \Psi(x,y,t) = \Phi(x,y) + \Gamma(x,y) + \epsilon \Lambda(t,x) $$
 %
 % $$ \Phi(x,y) = (1/2) \log \frac{\cosh(\pi y/2) - \cos[\pi(x-c)/2]}{\cosh(\pi
 % y/2) + \cos[\pi(x+c)/2]} $$
@@ -15,7 +15,7 @@
 % $$ G(x,k) = ... $$
 %
 % and
-% $$\Lambda(x,t) = (x + x^2/2) \cos(\lambda t)
+% $$\Lambda(t,x) = (x + x^2/2) \cos(\lambda t)
 
 
 classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
@@ -61,7 +61,7 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
 
     end
 
-    function [out] = Psi( obj, x, t, order )
+    function [out] = Psi( obj, t, x, order )
     %% Time-varying stream function
     %  Change order to return either value, first, or second derivatives
     %
@@ -69,7 +69,7 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
     %  [xx; xy; yy]
     out = obj.Phi(x,order) + ...
           obj.Gamma(x,order) + ...
-          obj.epsilon * obj.Lambda(x,t,order);
+          obj.epsilon * obj.Lambda(t,x,order);
     end
 
     function [out] = Phi( obj, x, order )
@@ -81,6 +81,8 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
 
       C = obj.c;
       Nx = size(x,2);
+
+      x
 
       X = x(1,:);
       Y = x(2,:);
@@ -115,8 +117,8 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
                / Den;
         dFYY = -dFXX;
 
-        dFXY = ( cos(C.*pi/2).*SinX2.*SinhY2.*(-3+cos(C.*pi) - CosX - CoshY) + ...
-               sin(C.*pi).*SinhY ) ./ Den;
+        dFXY = ( cos(C.*pi/2).*SinX2.*sinh(pi*Y/2).*(-3+cos(C.*pi) - CosX - CoshY) + ...
+               sin(C.*pi).*sinh(pi*Y) ) ./ Den;
 
         out = [dFXX; dFXY; dFYY];
 
@@ -173,9 +175,8 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
         gx = SinhCK.*(CoshKX - obj.quadk.*CoshKX.*CothK)./DenNeg - ...
              CoshCK.*(SinhKX - obj.quadk.*SinhKX.*TanhK)./DenPos;
 
+        KY = obj.quadk.*Y;
         if order == 1
-          KY = obj.quadk.*Y;
-
           % Gauss-Legendre integral as an inner product with weight row-vector
           out(1,n) = obj.quadw * (gx.* cos(KY));
           out(2,n) = -obj.quadw * (g .* obj.quadk.*sin(KY));
@@ -186,8 +187,8 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
         if order == 2
 
           K2 = obj.quadk.^2;
-          gxx = K2 ( -CothK .* SinhCK .* SinhKX ./ DenNeg + ...
-                     CoshCK .* CoshKX .* TanhK ./ DenPos );
+          gxx = K2 .* ( -CothK .* SinhCK .* SinhKX ./ DenNeg + ...
+                        CoshCK .* CoshKX .* TanhK ./ DenPos );
 
           %Gamma_xx
           out(1,n) = obj.quadw * (gxx.* cos(KY));
@@ -206,12 +207,14 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
 
     end
 
-    function [out] = Lambda( obj, x, t, order )
+    function [out] = Lambda( obj, t, x, order )
     %% Time-varying term in stream function
     %  Change order to return either value, first, or second derivatives
     %
     %  second derivatives are sorted as
     %  [xx; xy; yy]
+
+    whos
 
       Nx = size(x,2);
       if order == 0
