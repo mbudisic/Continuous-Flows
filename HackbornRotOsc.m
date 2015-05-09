@@ -25,13 +25,15 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
     epsilon % strength of wall oscillation
     lambda  % frequency of wall oscillation
     c       % rotor location (between -1 and 1)
+  end
+
+  properties (SetAccess = immutable)
 
     %% quadrature
     quadk   % coordinate points
     quadw   % weights
 
   end
-
 
   methods
 
@@ -47,17 +49,24 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
       flowp = num2cell(flowp);
       [obj.epsilon, obj.lambda, obj.c] = deal(flowp{:});
 
-      %% Set up integration parameters
-      obj.integrator = @ode23t;
-      obj.intprops = odeset;
-      obj.intprops = odeset(obj.intprops, 'Vectorized','on');
-
       %% Gauss-Legendre points and weights
       % on the k = [0,100] interval
       N = 100;
       % quadk - column vector
       % quadw - row vector
-      [obj.quadk,obj.quadw] = ContinuousFlows.lgwt(N, 0, 50);
+      [K,W] = ContinuousFlows.lgwt(N, 0, 50);
+      obj.quadk = K;
+      obj.quadw = W;
+
+
+      %% Set up integration parameters
+      obj.integrator = @ode23t;
+      obj.intprops = odeset;
+      obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
+      obj.intprops = odeset(obj.intprops, 'Jacobian', @obj.jacobian);
+      obj.intprops = odeset(obj.intprops, 'MaxStep', 1e-1);
+      %obj.intprops = odeset(obj.intprops, 'Stats','on' );
+
 
     end
 
@@ -76,8 +85,6 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
     out = obj.Phi(x,order) + ...
           obj.Gamma(x,order) + ...
           obj.epsilon * obj.Lambda(t,x,order);
-
-    out = obj.Phi(x,order);
 
     end
 
@@ -98,7 +105,7 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
       Cpos = cos(pi*(C+X)/2) + CpiY;
 
       if order == 0
-        out = log( -Cneg/Cpos )/2;
+        out = log( -Cneg./Cpos )/2;
       elseif order == 1
         Den = Cneg.*Cpos;
         dFX =  (pi/4).*( sin(C.*pi)-2.*cos(C.*pi/2).*cosh(pi.*Y/2).*sin(pi.*X/2) )./Den;
@@ -144,23 +151,22 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
       C = obj.c;
       Nx = size(x,2);
 
-      persistent CoshK SinhK TanhK CothK CoshCK SinhCK K2 Pp Pn
+      persistent TanhK CothK K K2 Pp Pn
 
-      if isempty(CoshK)
-        CoshK = cosh(obj.quadk);
-        SinhK = sinh(obj.quadk);
-        TanhK = tanh(obj.quadk);
-        CothK = coth(obj.quadk);
+      if isempty(Pp) || isempty(Pn)
 
-        CoshCK = cosh(C*obj.quadk);
-        SinhCK = sinh(C*obj.quadk)
-
-        Sinh2K = sinh(2*obj.quadk);
-
-        Pp = 2*CoshCK./(Sinh2K + 2*obj.quadk);
-        Pn = 2*SinhCK./(Sinh2K - 2*obj.quadk);
-
+        K = obj.quadk;
         K2 = obj.quadk.^2;
+
+        TanhK = tanh(K);
+        CothK = coth(K);
+
+        CoshCK = cosh(C*K);
+        SinhCK = sinh(C*K);
+        Sinh2K = sinh(2*K);
+
+        Pp = 2*CoshCK./(Sinh2K + 2*K);
+        Pn = 2*SinhCK./(Sinh2K - 2*K);
 
       end
 
@@ -170,13 +176,13 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
         X = x(1,n);
         Y = x(2,n);
 
-        CoshKX = cosh(obj.quadk*X);
-        SinhKX = sinh(obj.quadk*X);
+        CoshKX = cosh(K*X);
+        SinhKX = sinh(K*X);
 
         % zeroth-order terms
         G = Pp .* (TanhK .* CoshKX - X.*SinhKX) + Pn.*(CothK.*SinhKX - X.*CoshKX);
 
-        KY = obj.quadk.*Y;
+        KY = K.*Y;
         CosKY = cos(KY);
 
         if order == 0
@@ -187,34 +193,32 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
         SinKY = sin(KY);
 
         % first-order terms
-        Gx = CoshKX.*(-Pn - obj.quadk.*(Pp.*X - Pn.*CothK)) + ...
-             SinhKX.*(-Pp - obj.quadk.*(Pn.*X - Pp.*TanhK));
+        Gx = CoshKX.*(-Pn - K.*(Pp.*X - Pn.*CothK)) + ...
+             SinhKX.*(-Pp - K.*(Pn.*X - Pp.*TanhK));
 
         if order == 1
           % Gauss-Legendre integral as an inner product with weight row-vector
           out(1,n) = obj.quadw * (Gx.* CosKY);
-          out(2,n) = -obj.quadw * (G .* obj.quadk.*SinKY);
+          out(2,n) = -obj.quadw * (G .* K.*SinKY);
           continue;
         end
 
         % order == 2
         if order == 2
 
-          Gxx = -2*obj.quadk.*(Pp.*CoshKX + Pn.*SinhKX) + ...
+          Gxx = -2*K.*(Pp.*CoshKX + Pn.*SinhKX) + ...
                 K2.* (-Pn.*X.*CoshKX - Pp.*X.*SinhKX + Pn.*CothK.*SinhKX + Pp.*CoshKX.*TanhK);
 
           %Gamma_xx
           out(1,n) = obj.quadw * (Gxx.* cos(KY));
           %Gamma_xy
-          out(2,n) = -obj.quadw * (Gx .* obj.quadk.*sin(KY));
+          out(2,n) = -obj.quadw * (Gx .* K .*sin(KY));
           %Gamma_yy
           out(3,n) = -obj.quadw * (G.* K2 .*cos(KY));
           continue;
         end
 
         error('Higher orders not implemented');
-
-
       end
 
     end
@@ -225,8 +229,6 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
     %
     %  second derivatives are sorted as
     %  [xx; xy; yy]
-
-    whos
 
       Nx = size(x,2);
       if order == 0
