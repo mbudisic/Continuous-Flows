@@ -2,6 +2,9 @@
 %  Abstract class specifying interface of a "continuous-time dynamical
 %  system".
 %
+%  Leaves open situation where flow map is known explicitly and vector
+%  field can be computed from it. For numerical integration of a vector
+%  field, see ODEFlows subclass.
 
 classdef (Abstract) ContinuousFlow
 
