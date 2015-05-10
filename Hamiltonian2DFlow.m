@@ -45,8 +45,9 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     %     - each f(:,i) is a dim x 1 vector field evaluation
     %     - of the vector field at [ t(i), x(i,:) ] point
 
-    % system is Hamiltonian (has a stream function)
-      f = [0 -1; 1 0] * obj.Psi(t,x,1);
+    % system is Hamiltonian (has a stream function)    
+    f = flipud(obj.Psi(t,x,1)); % exchange rows
+    f(1,:) = -f(1,:);
     end
 
     function [J] = jacobian( obj, t, x )
