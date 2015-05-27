@@ -76,6 +76,27 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
 
     end
 
+    function [Omega] = vorticity( obj, t, x )
+    % VORTICITY Compute vorticity of the vector field along
+    % a single trajectory given by (t, x)
+    % [ Omega ] = vorticity( obj, t, x )
+    %
+    % t   - row-vector of times
+    % x   - trajectory
+    %     - columns correspond to time steps
+    %     - rows correspond to states
+    % Returns:
+    % Omega  - vorticity row vector, each element corresponds to vorticity
+    % at the slice ( t(i), x(:,i) )
+
+      Nx = size(x,2);
+      Psiv = obj.Psi(t,x,2);
+
+      Omega = Psiv(1,:) + Psiv(3,:);
+
+    end
+
+
     function [ err ] = testPsi( obj, t, x, o, delta )
     %TESTPSI Compute difference between numeric and analytic derivatives of
     %        Psi.
@@ -157,14 +178,14 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
 
     end
 
-    function [varargout] = stream( obj, t, xi, yi)
+    function [varargout] = streamplot( obj, t, xi, yi)
     %STREAM Level sets of the stream function of the flow.
     %
-    % STREAM( obj, t, xi, yi)
+    % STREAMPLOT( obj, t, xi, yi)
     %   Plots the stream function at time t on a tensor grid xi XX yi
-    % h = STREAM(obj, t, xi, yi)
+    % h = STREAMPLOT(obj, t, xi, yi)
     %   As above, and returns graphics handle of the contourf object.
-    % [X,Y,PSI] = STREAM(obj, t, xi, yi)
+    % [X,Y,PSI] = STREAMPLOT(obj, t, xi, yi)
     %   Returns spatial points and components of the vector field.
 
       [X,Y] = meshgrid(xi, yi);
@@ -182,6 +203,35 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
         end
       end
     end
+
+    function [varargout] = vorticityplot( obj, t, xi, yi)
+    %VORTICITYPLOT Level sets of the vorticity of the flow.
+    %
+    % VORTICITYPLOT( obj, t, xi, yi)
+    %   Plots the vorticity at time t on a tensor grid xi XX yi
+    % h = VORTICITYPLOT(obj, t, xi, yi)
+    %   As above, and returns graphics handle of the contourf object.
+    % [X,Y,PSI] = VORTICITYPLOT(obj, t, xi, yi)
+    %   Returns spatial points and components of the vorticity.
+
+      [X,Y] = meshgrid(xi, yi);
+
+      x = [X(:),Y(:)].';
+
+      Omega = obj.vorticity(t,x);
+
+      Omega = reshape(Omega,size(X));
+
+      if nargout > 1
+        varargout = {X,Y,Omega};
+      else
+        [C,h] = contourf(X,Y,Omega);
+        if nargout > 0
+          varargout = h;
+        end
+      end
+    end
+
 
   end
 
