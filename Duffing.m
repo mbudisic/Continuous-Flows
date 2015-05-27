@@ -22,6 +22,10 @@ classdef Duffing < ContinuousFlows.Hamiltonian2DFlow
     % alpha - nonlinear spring constant
     % beta  - linear spring constant
 
+      if nargin < 3
+        help ContinuousFlows.Duffing.Duffing
+      end
+
       obj.alpha = alpha;
       obj.beta = beta;
       obj.dt = dt;
@@ -61,7 +65,9 @@ classdef Duffing < ContinuousFlows.Hamiltonian2DFlow
       elseif o == 1
         out = [obj.beta*X + obj.alpha*X.^3; Y];
       elseif o == 2
-        out = [obj.beta + 3*obj.alpha*X^2; zeros(1,Nx); ones(1,Nx)];
+        out = [obj.beta + 3*obj.alpha*X.^2; ... % dxxPsi
+               zeros(1,Nx); ... % dxyPsi
+               ones(1,Nx)]; % dyyPsi
       else
         error('Higher orders not implemented');
       end

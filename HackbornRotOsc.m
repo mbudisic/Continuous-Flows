@@ -23,7 +23,7 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
   properties
     %% flow properties
     epsilon % strength of wall oscillation
-    lambda  % frequency of wall oscillation
+    lambda  % angular frequency of wall oscillation
     c       % rotor location (between -1 and 1)
   end
 
@@ -43,11 +43,32 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
     %
     % dt    time discretization step
     % flowp is a 1 x 3 vector of flow parameters [epsilon, lambda, c]
+    %    epsilon -- strength of wall oscillation
+    %    lambda  -- angular frequency of wall oscillation
+    %    c       -- rotor location (between -1 and 1)
+    %
+    % Alternatively, set flowp to string 'Hackborn' to get a seto
+    % of parameters from Hackborn 1997 paper.
+
+      if nargin < 2
+        help ContinuousFlows.HackbornRotOsc.HackbornRotOsc
+      end
 
       obj.dt = dt;
 
+      if ischar( flowp )
+        switch flowp
+          case 'Hackborn'
+            flowp = [0.02, 1.232, 0.54];
+          otherwise
+            error('Unknown parameter set');
+        end
+      end
+
       flowp = num2cell(flowp);
       [obj.epsilon, obj.lambda, obj.c] = deal(flowp{:});
+
+
 
       %% Gauss-Legendre points and weights
       % on the k = [0,100] interval
@@ -82,9 +103,9 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
     % out = obj.Gamma(x,order);
     %    out = obj.Lambda(t,x,order);
 
-    out = obj.Phi(x,order) + ...
-          obj.Gamma(x,order) + ...
-          obj.epsilon * obj.Lambda(t,x,order);
+      out = obj.Phi(x,order) + ...
+            obj.Gamma(x,order) + ...
+            obj.epsilon * obj.Lambda(t,x,order);
 
     end
 
@@ -127,13 +148,15 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
 
         dFXX = cos(C.*pi/2).* cos(pi.*X/2) .* ...
                (cosh(pi.*Y/2).*(-3+cos(C.*pi) + CosX + CoshY) + 4.*sin(C.*pi/2).*SinX2)...
-               / Den;
+               ./ Den;
         dFYY = -dFXX;
 
         dFXY = ( cos(C.*pi/2).*SinX2.*sinh(pi*Y/2).*(-3+cos(C.*pi) - CosX - CoshY) + ...
-               sin(C.*pi).*sinh(pi*Y) ) ./ Den;
+                 sin(C.*pi).*sinh(pi*Y) ) ./ Den;
 
-        out = [dFXX; dFXY; dFYY];
+        out = [dFXX; ...
+               dFXY; ...
+               dFYY];
 
       else
         error('Orders > 2 not implemented');
@@ -207,7 +230,8 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
         if order == 2
 
           Gxx = -2*K.*(Pp.*CoshKX + Pn.*SinhKX) + ...
-                K2.* (-Pn.*X.*CoshKX - Pp.*X.*SinhKX + Pn.*CothK.*SinhKX + Pp.*CoshKX.*TanhK);
+                K2.* (-Pn.*X.*CoshKX - Pp.*X.*SinhKX +...
+                      Pn.*CothK.*SinhKX + Pp.*CoshKX.*TanhK);
 
           %Gamma_xx
           out(1,n) = obj.quadw * (Gxx.* cos(KY));
@@ -231,17 +255,18 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
     %  [xx; xy; yy]
 
       Nx = size(x,2);
+      COS = cos(obj.lambda*t);
       if order == 0
-        out = ( x(1,:) + x(1,:).^2 / 2 ) .* cos(obj.lambda * t );
+        out = ( x(1,:) + x(1,:).^2 / 2 ) .* COS;
       elseif order == 1
-        out = [( 1 + x(1,:) ) .* cos(obj.lambda*t );
+        out = [( 1 + x(1,:) ) .* COS;
                zeros(1,Nx) ];
       else
-        out = [cos(obj.lambda*t); zeros(2,Nx)];
+        if numel(COS) == 1
+          COS = repmat(COS, [1,Nx]);
+        end
+        out = [COS; zeros(2,Nx)];
       end
     end
-
-
   end
-
 end
