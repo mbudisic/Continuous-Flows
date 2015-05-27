@@ -37,15 +37,10 @@ classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
       % initialize output structures
       M = size(x0, 1);
       N = size(x0, 2);
-      if fulltraj
-        t = ( t0:obj.dt:(t0+T) );
-        L = numel(t);
-        x = nan( M, L, N );
-      else
-        M = size(x0, 1);
-        N = size(x0, 2);
-        x = nan( M, N );
-      end
+      t = ( t0:obj.dt:(t0+T) );
+      L = numel(t);
+      x = nan( M, L, N );
+      xf = nan( M, N ); % final point
 
       % timing included
       if nargout >= 3
@@ -57,7 +52,7 @@ classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
 
       %%
       % Integrate initial conditions
-      for n = 1:N
+      parfor n = 1:N
         fprintf('Computing initial condition %d\n',n)
         disp(x0(:,n));
         if timeme
@@ -71,16 +66,19 @@ classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
         if fulltraj
           % record full trajectory
           x(:,:, n) = deval( sol, t );
-        else
-          % record just last point
-          x(:,n) = sol.y(:,end);
         end
+        % record just last point
+        xf(:,n) = sol.y(:,end);
         fprintf(1,'Initial condition %d computed\n', n);
       end
 
       %%
       % Assign outputs
-      varargout{1} = x;
+      if fulltraj
+        varargout{1} = x;
+      else
+        varargout{1} = xf;
+      end
       if fulltraj
         varargout{2} = t;
       end
