@@ -10,7 +10,7 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     [out] = Psi( obj, t, x, o )
     % PSI Compute the stream function or its derivatives along a
     % trajectory given by (t, x)
-    % [ f ] = Psi( obj, t, x, order )
+    % [ out ] = Psi( obj, t, x, order )
     %
     % t   - row-vector of times
     % x   - trajectory
@@ -45,7 +45,7 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     %     - each f(:,i) is a dim x 1 vector field evaluation
     %     - of the vector field at [ t(i), x(i,:) ] point
 
-    % system is Hamiltonian (has a stream function)    
+    % system is Hamiltonian (has a stream function)
     f = flipud(obj.Psi(t,x,1)); % exchange rows
     f(1,:) = -f(1,:);
     end
