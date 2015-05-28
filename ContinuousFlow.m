@@ -9,9 +9,8 @@
 classdef (Abstract) ContinuousFlow
 
   properties
-    % trajectory discretization step
-    dt
-
+    dt % trajectory discretization step
+    Domain % suggested (square) domain Ndim x 2
   end
 
   methods (Abstract)

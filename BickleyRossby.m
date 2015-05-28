@@ -73,6 +73,7 @@ classdef BickleyRossby < ContinuousFlows.Hamiltonian2DFlow
     k1,k2,k3 %
     A1,A2,A3 %
 
+
   end
 
   methods
@@ -82,6 +83,8 @@ classdef BickleyRossby < ContinuousFlows.Hamiltonian2DFlow
     %
     % flow = BickleyRossby;
     % Recommended resolution is dt = 1e-3;
+
+      obj.Domain = [0,20; -4,4];
 
       obj.c1 = 0;
       obj.c2 = 0.205*obj.U0;

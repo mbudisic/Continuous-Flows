@@ -8,6 +8,7 @@ classdef DoubleGyre < ContinuousFlows.Hamiltonian2DFlow
     A
     omega
     epsilon
+
   end
 
   methods
@@ -25,6 +26,8 @@ classdef DoubleGyre < ContinuousFlows.Hamiltonian2DFlow
       end
 
       obj.dt = dt;
+      obj.Domain = [0,2; 0,1];
+
       if ischar( params )
         switch params
           case 'standard'
@@ -83,7 +86,7 @@ classdef DoubleGyre < ContinuousFlows.Hamiltonian2DFlow
       if o == 0
         out = obj.A.*SINF.*SINY;
       elseif o == 1
-        dXPsi = pi*obj.A*SINY.*COSF*dF;
+        dXPsi = pi*obj.A*SINY.*COSF.*dF;
         dYPsi = pi*obj.A*COSY.*SINF;
         out = [dXPsi; dYPsi];
       elseif o == 2

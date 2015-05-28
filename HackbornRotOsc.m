@@ -56,6 +56,7 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
         help ContinuousFlows.HackbornRotOsc.HackbornRotOsc
       end
 
+      obj.Domain = [-1,1; -2,2];
       obj.dt = dt;
 
       if ischar( flowp )

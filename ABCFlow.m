@@ -28,6 +28,7 @@ classdef ABCFlow < ContinuousFlows.ODEFlow
     % -- 'unsteady' chaotic non-autonomous parameter set
 
       obj.dt = dt;
+      obj.Domain = repmat( [0,2*pi], [3,1] );
 
       if ischar( params )
         switch params

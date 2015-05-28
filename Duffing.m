@@ -26,6 +26,8 @@ classdef Duffing < ContinuousFlows.Hamiltonian2DFlow
         help ContinuousFlows.Duffing.Duffing
       end
 
+      obj.Domain = [-2,2; -2,2];
+
       obj.alpha = alpha;
       obj.beta = beta;
       obj.dt = dt;

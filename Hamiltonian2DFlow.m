@@ -46,8 +46,8 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     %     - of the vector field at [ t(i), x(i,:) ] point
 
     % system is Hamiltonian (has a stream function)
-    f = flipud(obj.Psi(t,x,1)); % exchange rows
-    f(1,:) = -f(1,:);
+      f = flipud(obj.Psi(t,x,1)); % exchange rows
+      f(1,:) = -f(1,:);
     end
 
     function [J] = jacobian( obj, t, x )
@@ -160,6 +160,12 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     % [X,Y,U,V] = QUIVER(obj, t, xi, yi)
     %   Returns spatial points and components of the vector field.
 
+      if nargin < 3
+        R = 20;
+        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
+        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+      end
+
       [X,Y] = meshgrid(xi, yi);
       f = obj.vf(t, [X(:),Y(:)].');
 
@@ -187,6 +193,12 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     % [X,Y,PSI] = STREAMPLOT(obj, t, xi, yi)
     %   Returns spatial points and components of the vector field.
 
+      if nargin < 3
+        R = 100;
+        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
+        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+      end
+
       [X,Y] = meshgrid(xi, yi);
 
       x = [X(:),Y(:)].';
@@ -212,6 +224,12 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     %   As above, and returns graphics handle of the contourf object.
     % [X,Y,PSI] = VORTICITYPLOT(obj, t, xi, yi)
     %   Returns spatial points and components of the vorticity.
+
+      if nargin < 3
+        R = 100;
+        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
+        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+      end
 
       [X,Y] = meshgrid(xi, yi);
 
