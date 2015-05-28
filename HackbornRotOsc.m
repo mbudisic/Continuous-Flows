@@ -7,14 +7,16 @@
 % Stream function $\Psi(x,y,t)$ is given by three components:
 % $$ \Psi(x,y,t) = \Phi(x,y) + \Gamma(x,y) + \epsilon \Lambda(t,x) $$
 %
+% Free rotlet:
 % $$ \Phi(x,y) = (1/2) \log \frac{\cosh(\pi y/2) - \cos[\pi(x-c)/2]}{\cosh(\pi
 % y/2) + \cos[\pi(x+c)/2]} $$
 %
+% No-slip boundary correction to rotlet
 % $$ \Gamma(x,y) = \int_0^\infty \cos(k y) G(x,k) $$
 % where
 % $$ G(x,k) = ... $$
 %
-% and
+% Wall-induced periodic shear
 % $$\Lambda(t,x) = (x + x^2/2) \cos(\lambda t)
 
 
@@ -72,7 +74,7 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
 
       %% Gauss-Legendre points and weights
       % on the k = [0,100] interval
-      N = 100;
+      N = 150;
       % quadk - column vector
       % quadw - row vector
       [K,W] = ContinuousFlows.lgwt(N, 0, 50);
@@ -99,13 +101,13 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
     %  [xx; xy; yy]
 
 
-    % out = obj.Phi(x,order);
-    % out = obj.Gamma(x,order);
-    %    out = obj.Lambda(t,x,order);
+    %out = obj.Phi(x,order);
+    %out = obj.Gamma(x,order);
+    %out = obj.Lambda(t,x,order);
 
-      out = obj.Phi(x,order) + ...
-            obj.Gamma(x,order) + ...
-            obj.epsilon * obj.Lambda(t,x,order);
+    out = obj.Phi(x,order) + ...
+          obj.Gamma(x,order) + ...
+          obj.epsilon * obj.Lambda(t,x,order);
 
     end
 
@@ -234,11 +236,11 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
                       Pn.*CothK.*SinhKX + Pp.*CoshKX.*TanhK);
 
           %Gamma_xx
-          out(1,n) = obj.quadw * (Gxx.* cos(KY));
+          out(1,n) = obj.quadw * (Gxx.* CosKY);
           %Gamma_xy
-          out(2,n) = -obj.quadw * (Gx .* K .*sin(KY));
+          out(2,n) = -obj.quadw * (Gx .* K .*SinKY);
           %Gamma_yy
-          out(3,n) = -obj.quadw * (G.* K2 .*cos(KY));
+          out(3,n) = -obj.quadw * (G.* K2 .*CosKY);
           continue;
         end
 
