@@ -91,7 +91,6 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
 
       Nx = size(x,2);
       Psiv = obj.Psi(t,x,2);
-
       Omega = Psiv(1,:) + Psiv(3,:);
 
     end
@@ -219,7 +218,6 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
       x = [X(:),Y(:)].';
 
       Omega = obj.vorticity(t,x);
-
       Omega = reshape(Omega,size(X));
 
       if nargout > 1
