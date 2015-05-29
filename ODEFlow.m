@@ -52,9 +52,8 @@ classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
 
       %%
       % Integrate initial conditions
+      fprintf('Running %d initial conditions\n',N);
       parfor n = 1:N
-        fprintf('Computing initial condition %d\n',n)
-        disp(x0(:,n));
         if timeme
           tic;
         end
@@ -69,8 +68,9 @@ classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
         end
         % record just last point
         xf(:,n) = sol.y(:,end);
-        fprintf(1,'Initial condition %d computed\n', n);
+        fprintf('.');
       end
+      fprintf('done\n');
 
       %%
       % Assign outputs
