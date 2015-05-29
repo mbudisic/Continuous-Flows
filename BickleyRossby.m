@@ -1,4 +1,4 @@
-%%RYPINAJET
+%%BICKLEYROSSBY
 %
 % Polar jet with Rossby traveling wave perturbation.
 %
@@ -78,7 +78,7 @@ classdef BickleyRossby < ContinuousFlows.Hamiltonian2DFlow
 
   methods
 
-    function obj = BickleyRossby( dt )
+    function obj = BickleyRossby( dt, params )
     %RYPINAJET Construct the flow with given time step.
     %
     % flow = BickleyRossby;
@@ -86,9 +86,6 @@ classdef BickleyRossby < ContinuousFlows.Hamiltonian2DFlow
 
       obj.Domain = [0,20; -4,4];
 
-      obj.c1 = 0;
-      obj.c2 = 0.205*obj.U0;
-      obj.c3 = 0.461*obj.U0;
 
       obj.k1 = 2/obj.Re;
       obj.k2 = 4/obj.Re;
@@ -97,6 +94,30 @@ classdef BickleyRossby < ContinuousFlows.Hamiltonian2DFlow
       obj.A1 = 0.0;
       obj.A2 = 0.1;
       obj.A3 = 0.3;
+
+
+      if nargin < 2
+        params = 'standard';
+      end
+
+      validateattributes(dt, {'numeric'},{'positive'});
+
+
+      if ischar( params )
+        switch params
+          case 'bickley'
+            obj.c1 = 0.0;
+            obj.c2 = 0.0;
+            obj.c3 = 0.0;
+          case 'standard'
+            obj.c1 = 0;
+            obj.c2 = 0.205*obj.U0;
+            obj.c3 = 0.461*obj.U0;
+
+          otherwise
+            error('Unknown parameter set');
+        end
+      end
 
       if nargin < 1
         obj.dt = 1e-3;
@@ -165,13 +186,13 @@ classdef BickleyRossby < ContinuousFlows.Hamiltonian2DFlow
         out = [dFx; dFy];
       elseif o == 2
         dFxx = -obj.U0*obj.L*SECHY2.* ...
-              ( obj.k1^2*A1COSK1 + ...
-                obj.k2^2*A2COSK2 + ...
-                obj.k3^2*A3COSK3  );
+               ( obj.k1^2*A1COSK1 + ...
+                 obj.k2^2*A2COSK2 + ...
+                 obj.k3^2*A3COSK3  );
         dFxy = 2 * obj.U0 * TANHY .* SECHY2 .* ...
-              ( obj.k1*A1SINK1 + ...
-                obj.k2*A2SINK2 + ...
-                obj.k3*A3SINK3  );
+               ( obj.k1*A1SINK1 + ...
+                 obj.k2*A2SINK2 + ...
+                 obj.k3*A3SINK3  );
         dFyy = 2*(obj.U0/obj.L) .* ( SECHY2.*TANHY + ...
                                      SECHY2.^2 .* (cosh(2*y/obj.L)-2) .* ...
                                      (A1COSK1 + A2COSK2 + A3COSK3) );
