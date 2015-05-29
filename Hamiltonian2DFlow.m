@@ -31,7 +31,7 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
   methods
 
     function [ f ] = vf( obj, t, x )
-    % VF Compute the vector field along a single
+    % VF Compute the velocity field along a single
     % trajectory given by (t, x)
     % [ f ] = vf( obj, t, x )
     %
@@ -41,9 +41,9 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     %     - rows correspond to states
     %
     % Returns:
-    % f   - evaluation of the vector field
-    %     - each f(:,i) is a dim x 1 vector field evaluation
-    %     - of the vector field at [ t(i), x(i,:) ] point
+    % f   - evaluation of the velocity field
+    %     - each f(:,i) is a dim x 1 velocity field evaluation
+    %     - of the velocity field at [ t(i), x(i,:) ] point
 
     % system is Hamiltonian (has a stream function)
       f = flipud(obj.Psi(t,x,1)); % exchange rows
@@ -51,7 +51,7 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     end
 
     function [J] = jacobian( obj, t, x )
-    % JACOBIAN Compute Jacobian of the vector field along
+    % JACOBIAN Compute Jacobian of the velocity field along
     % a single trajectory given by (t, x)
     % [ J ] = jacobian( obj, t, x )
     %
@@ -62,7 +62,7 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     % Returns:
     % J   - Jacobians
     %     - each J(:,:,i) is a dim x dim Jacobian matrix
-    %     - of the vector field at [ t(i), x(i,:) ] point
+    %     - of the velocity field at [ t(i), x(i,:) ] point
 
       Nx = size(x,2);
       Jv = obj.Psi(t,x,2);
@@ -77,7 +77,7 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     end
 
     function [Omega] = vorticity( obj, t, x )
-    % VORTICITY Compute vorticity of the vector field along
+    % VORTICITY Compute vorticity of the velocity field along
     % a single trajectory given by (t, x)
     % [ Omega ] = vorticity( obj, t, x )
     %
@@ -147,23 +147,39 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
       err = bsxfun( @minus, aPsiD, nPsiD );
     end
 
-    function [varargout] = quiver( obj, t, xi, yi )
-    %QUIVER Vector field of the flow.
+    function [varargout] = quiverplot( obj, t, varargin )
+    %QUIVERPLOT velocity field of the flow.
     %
-    % Produce vector field of the flow at time t on the tensor product grid
+    % Produce velocity field of the flow at time t on the tensor product grid
     % xi XX yi
     %
-    % QUIVER(obj, t, xi, yi)
-    %   Plots the vector field at time t on a tensor grid xi XX yi
-    % h = QUIVER(obj, t, xi, yi)
-    %   As above, and returns graphics handle of the quiver object.
-    % [X,Y,U,V] = QUIVER(obj, t, xi, yi)
-    %   Returns spatial points and components of the vector field.
+    % QUIVERPLOT(obj, t)
+    %   Plots the velocity field at time t on the default grid on obj.Domain.
+    % QUIVERPLOT(obj, t, R)
+    %   As above, uses R points per axis of the obj.Domain (default: R =
+    %   20).
+    % QUIVERPLOT(obj, t, xi, yi)
+    %   As above, uses a tensor grid xi XX yi to plot.
+    %
+    % [h] = QUIVERPLOT(...)
+    %   As above, returns graphics handle.
+    % [X,Y,U,V] = QUIVERPLOT(...)
+    %   Returns spatial points and components of the velocity field.
 
-      if nargin < 3
+    % compute grid based on input values
+      if isempty(varargin)
         R = 20;
+      elseif numel(varargin) == 1
+        R = varargin{1};
+      end
+
+      if numel(varargin) < 2
         xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
         yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+      else
+        assert( numel(varargin) == 2, 'We can use at most 4 arguments');
+        xi = varargin{3};
+        yi = varargin{4};
       end
 
       [X,Y] = meshgrid(xi, yi);
@@ -183,20 +199,35 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
 
     end
 
-    function [varargout] = streamplot( obj, t, xi, yi)
+    function [varargout] = streamplot( obj, t, varargin)
     %STREAM Level sets of the stream function of the flow.
     %
-    % STREAMPLOT( obj, t, xi, yi)
-    %   Plots the stream function at time t on a tensor grid xi XX yi
-    % h = STREAMPLOT(obj, t, xi, yi)
-    %   As above, and returns graphics handle of the contourf object.
-    % [X,Y,PSI] = STREAMPLOT(obj, t, xi, yi)
-    %   Returns spatial points and components of the vector field.
+    % STREAMPLOT(obj, t)
+    %   Plots the stream function at time t on the default grid on obj.Domain.
+    % STREAMPLOT(obj, t, R)
+    %   As above, uses R points per axis of the obj.Domain (default: R =
+    %   20).
+    % STREAMPLOT(obj, t, xi, yi)
+    %   As above, uses a tensor grid xi XX yi to plot.
+    % [h] = STREAMPLOT(...)
+    %   As above, returns graphics handle.
+    % [X,Y,PSI] = STREAMPLOT(...)
+    %   Returns spatial points and values of the stream function.
 
-      if nargin < 3
+    % compute grid based on input values
+      if isempty(varargin)
         R = 100;
+      elseif numel(varargin) == 1
+        R = varargin{1};
+      end
+
+      if numel(varargin) < 2
         xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
         yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+      else
+        assert( numel(varargin) == 2, 'We can use at most 4 arguments');
+        xi = varargin{3};
+        yi = varargin{4};
       end
 
       [X,Y] = meshgrid(xi, yi);
@@ -215,20 +246,35 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
       end
     end
 
-    function [varargout] = vorticityplot( obj, t, xi, yi)
+    function [varargout] = vorticityplot( obj, t, varargin)
     %VORTICITYPLOT Level sets of the vorticity of the flow.
     %
-    % VORTICITYPLOT( obj, t, xi, yi)
-    %   Plots the vorticity at time t on a tensor grid xi XX yi
+    % VORTICITYPLOT(obj, t)
+    %   Plots the scalar (z-component) vorticity field at time t on the default grid on obj.Domain.
+    % h = VORTICITYPLOT(obj, t, R)
+    %   As above, uses R points per axis of the obj.Domain (default: R =
+    %   20).
     % h = VORTICITYPLOT(obj, t, xi, yi)
-    %   As above, and returns graphics handle of the contourf object.
-    % [X,Y,PSI] = VORTICITYPLOT(obj, t, xi, yi)
-    %   Returns spatial points and components of the vorticity.
+    %   As above, uses a tensor grid xi XX yi to plot.
+    % [h] = VORTICITYPLOT(...)
+    %   As above, returns graphics handle.
+    % [X,Y,Omega] = VORTICITYPLOT(...)
+    %   Returns spatial points and values of the vorticity.
 
-      if nargin < 3
+    % compute grid based on input values
+      if isempty(varargin)
         R = 100;
+      elseif numel(varargin) == 1
+        R = varargin{1};
+      end
+
+      if numel(varargin) < 2
         xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
         yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+      else
+        assert( numel(varargin) == 2, 'We can use at most 4 arguments');
+        xi = varargin{3};
+        yi = varargin{4};
       end
 
       [X,Y] = meshgrid(xi, yi);
