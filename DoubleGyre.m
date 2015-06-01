@@ -32,6 +32,8 @@ classdef DoubleGyre < ContinuousFlows.Hamiltonian2DFlow
         switch params
           case 'standard'
             params = [0.1, 2*pi, 0.25]; % frequency == 1
+          case 'steady'
+            params = [0.1, 2*pi, 0]; % frequency == 1
           otherwise
             error('Unknown parameter set');
         end
