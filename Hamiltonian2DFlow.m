@@ -191,10 +191,10 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
       V = nan( [size(X), numel(t)] );
 
       for k = 1:numel(t)
-        fi = obj.vf(t(k), [X(:),Y(:)].');
+        f = obj.vf(t(k), [X(:),Y(:)].');
 
-        U(:,:,k) = reshape(fi(1,:), size(X));
-        V(:,:,k) = reshape(fi(2,:), size(Y));
+        U(:,:,k) = reshape(f(1,:), size(X));
+        V(:,:,k) = reshape(f(2,:), size(Y));
       end
 
       if nargout > 1
@@ -202,12 +202,14 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
       else
         for k = 1:numel(t)
           if k == 1
-            h = quiver(X,Y,U(:,:,k),V(:,:,k));
+            h = quiver(X,Y,U(:,:,1),V(:,:,1));
           else
+            h.Visible = 'off';
             h.UData = U(:,:,k);
             h.VData = V(:,:,k);
+            h.Visible = 'on';
           end
-          pause(0.1);
+          pause(1/15);
         end
         if nargout > 0
           varargout = h;
@@ -220,7 +222,9 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     %STREAM Level sets of the stream function of the flow.
     %
     % STREAMPLOT(obj, t)
-    %   Plots the stream function at time t on the default grid on obj.Domain.
+    %   Plots the stream function at time t on the default grid on
+    %   obj.Domain.
+    %   If t has multiple elements, video is produced.
     % STREAMPLOT(obj, t, R)
     %   As above, uses R points per axis of the obj.Domain (default: R =
     %   20).
@@ -230,6 +234,9 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     %   As above, returns graphics handle.
     % [X,Y,PSI] = STREAMPLOT(...)
     %   Returns spatial points and values of the stream function.
+    %   PSI is a matrix of size [rows(X), cols(X), numel(t)]
+    %
+
 
     % compute grid based on input values
       if isempty(varargin)
@@ -251,12 +258,29 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
 
       x = [X(:),Y(:)].';
 
-      Psiv = reshape(obj.Psi(t,x,0),size(X));
+      Psi = nan( [size(X), numel(t)] );
+
+      for k = 1:numel(t)
+        Psi_i = obj.Psi(t(k),x,0);
+        Psi(:,:,k) = reshape(Psi_i,size(X));
+      end
 
       if nargout > 1
-        varargout = {X,Y,Psiv};
+        varargout = {X,Y,Psi};
       else
-        [C,h] = contourf(X,Y,Psiv);
+        for k = 1:numel(t)
+          if k == 1
+            [~,h] = contourf(X,Y,Psi(:,:,1));
+          else
+            h.Visible ='off';
+            h.ZData = Psi(:,:,k);
+            h.Visible = 'on';
+          end
+          pause(1/15);
+        end
+        if nargout > 0
+          varargout = h;
+        end
         if nargout > 0
           varargout = h;
         end
@@ -267,7 +291,10 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     %VORTICITYPLOT Level sets of the vorticity of the flow.
     %
     % VORTICITYPLOT(obj, t)
-    %   Plots the scalar (z-component) vorticity field at time t on the default grid on obj.Domain.
+    %   Plots the scalar (z-component) vorticity field at time t on the
+    %   default grid on obj.Domain.
+    %   If t has multiple elements, video is produced.
+    %
     % h = VORTICITYPLOT(obj, t, R)
     %   As above, uses R points per axis of the obj.Domain (default: R =
     %   20).
@@ -275,8 +302,11 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     %   As above, uses a tensor grid xi XX yi to plot.
     % [h] = VORTICITYPLOT(...)
     %   As above, returns graphics handle.
-    % [X,Y,Omega] = VORTICITYPLOT(...)
+    % [X,Y,OMEGA] = VORTICITYPLOT(...)
     %   Returns spatial points and values of the vorticity.
+    %   OMEGA is a matrix of size [rows(X), cols(X), numel(t)]
+    %
+
 
     % compute grid based on input values
       if isempty(varargin)
@@ -298,13 +328,26 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
 
       x = [X(:),Y(:)].';
 
-      Omega = obj.vorticity(t,x);
-      Omega = reshape(Omega,size(X));
+      Omega = nan( [size(X), numel(t)] );
+
+      for k = 1:numel(t)
+        Omega_i = obj.vorticity(t(k),x);
+        Omega(:,:,k) = reshape(Omega_i,size(X));
+      end
 
       if nargout > 1
         varargout = {X,Y,Omega};
       else
-        [C,h] = contourf(X,Y,Omega);
+        for k = 1:numel(t)
+          if k == 1
+            [~,h] = contourf(X,Y,Omega(:,:,1));
+          else
+            h.Visible ='off';
+            h.ZData = Omega(:,:,k);
+            h.Visible = 'on';
+          end
+          pause(1/15);
+        end
         if nargout > 0
           varargout = h;
         end
