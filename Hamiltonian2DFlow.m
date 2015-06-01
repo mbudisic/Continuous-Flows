@@ -154,7 +154,9 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     % xi XX yi
     %
     % QUIVERPLOT(obj, t)
-    %   Plots the velocity field at time t on the default grid on obj.Domain.
+    %   Plots the velocity field at time t on the default grid on
+    %   obj.Domain.
+    %   If t has multiple elements, video is produced.
     % QUIVERPLOT(obj, t, R)
     %   As above, uses R points per axis of the obj.Domain (default: R =
     %   20).
@@ -165,6 +167,7 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
     %   As above, returns graphics handle.
     % [X,Y,U,V] = QUIVERPLOT(...)
     %   Returns spatial points and components of the velocity field.
+    %   U and V are matrices of size [rows(X), cols(X), numel(t)]
 
     % compute grid based on input values
       if isempty(varargin)
@@ -183,15 +186,29 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
       end
 
       [X,Y] = meshgrid(xi, yi);
-      f = obj.vf(t, [X(:),Y(:)].');
 
-      U = reshape(f(1,:), size(X));
-      V = reshape(f(2,:), size(Y));
+      U = nan( [size(X), numel(t)] );
+      V = nan( [size(X), numel(t)] );
+
+      for k = 1:numel(t)
+        fi = obj.vf(t(k), [X(:),Y(:)].');
+
+        U(:,:,k) = reshape(fi(1,:), size(X));
+        V(:,:,k) = reshape(fi(2,:), size(Y));
+      end
 
       if nargout > 1
         varargout = {X,Y,U,V};
       else
-        h = quiver(X,Y,U,V);
+        for k = 1:numel(t)
+          if k == 1
+            h = quiver(X,Y,U(:,:,k),V(:,:,k));
+          else
+            h.UData = U(:,:,k);
+            h.VData = V(:,:,k);
+          end
+          pause(0.1);
+        end
         if nargout > 0
           varargout = h;
         end
