@@ -167,7 +167,6 @@ classdef BickleyRossby < ContinuousFlows.Hamiltonian2DFlow
       TANHY = tanh(y/obj.L);
       SECHY2 = sech(y/obj.L).^2;
 
-
       if o == 0
         out = obj.c3*y - obj.L*obj.U0 * ...
               ( TANHY - ...

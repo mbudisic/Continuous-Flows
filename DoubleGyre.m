@@ -20,7 +20,9 @@ classdef DoubleGyre < ContinuousFlows.Hamiltonian2DFlow
     %
     % -- 1 x 3 vector of coefficients [A,omega, epsilon]
     % -- 'standard' - parameter set [0.1, 2*pi, 0.25]
+    % -- 'steady'   - parameter set [0.1, 2*pi, 0.00]
 
+    
       if nargin < 2
         help ContinuousFlows.DoubleGyre.DoubleGyre
       end

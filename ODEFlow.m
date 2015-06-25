@@ -67,6 +67,7 @@ classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
         % record just last point
         xf(:,n) = sol.y(:,end);
         fprintf('.');
+        if mod(n,30) == 0, fprintf('\n'); end
         if returnSolutions
           s{n} = sol;
         end
