@@ -1,36 +1,49 @@
+classdef Duffing < ContinuousFlows.Hamiltonian2DFlow
 %DUFFING Unforced, undamped Duffing oscillator.
 %
 % Energy function is alpha*x^4/4 + beta*x^2/2 + y^2/2
-
-classdef Duffing < ContinuousFlows.Hamiltonian2DFlow
 
   properties
     %% flow properties
     alpha % nonlinear spring stiffness
     beta  % linear spring stiffness
+    epsilon % strength of force
+    omega % frequency of force
 
   end
 
 
   methods
 
-    function obj = Duffing( dt, alpha, beta )
+    function obj = Duffing( dt, flowp )
     %DUFFING Construct a 2d unforced undamped Duffing oscillator
     % Duffing( dt, alpha, beta )
     %
     % dt    time discretization step
-    % alpha - nonlinear spring constant
-    % beta  - linear spring constant
+    % flowp
+    %     -- 1 x 3 vector of coefficients [alpha, beta]
+    %                  alpha   -- nonlinear spring constant
+    %                  beta    -- linear spring constant
+    %     -- 'doublewell'   - parameter set [1, -1, 0, 0]
 
       if nargin < 3
         help ContinuousFlows.Duffing.Duffing
       end
 
       obj.Domain = [-2,2; -2,2];
-
-      obj.alpha = alpha;
-      obj.beta = beta;
       obj.dt = dt;
+
+      if ischar( flowp )
+        switch flowp
+          case 'doublewell'
+            flowp = [1, -1, 0, 0];
+          otherwise
+            error('Unknown parameter set');
+        end
+      end
+
+      flowp = num2cell(flowp);
+      [obj.alpha, obj.beta, obj.epsilon, obj.omega] = deal(flowp{:});
 
       %% Set up integration parameters
       obj.integrator = @ode23t;
@@ -63,7 +76,7 @@ classdef Duffing < ContinuousFlows.Hamiltonian2DFlow
       Y = x(2,:);
 
       if o == 0
-        out = obj.beta*0.5*X.^2 + obj.alpha*0.25*X.^4+ 0.5*Y.^2;
+        out = obj.beta*0.5*X.^2 + obj.alpha*0.25*X.^4+ 0.5*Y.^2 + X.*obj.epsilon*cos(obj.omega*t);
       elseif o == 1
         out = [obj.beta*X + obj.alpha*X.^3; Y];
       elseif o == 2

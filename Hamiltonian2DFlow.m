@@ -1,9 +1,5 @@
-%HAMILTONIAN2DFLOW
-%
-% Abstract class specifying interface of a "continuous-time" Hamiltonian
-% system in terms of its stream function Psi.
-
 classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
+%HAMILTONIAN2DFLOW Abstract class specifying interface of a "continuous-time" Hamiltonian system in terms of its stream function Psi.
 
   methods (Abstract)
 
@@ -255,7 +251,6 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
 
       for k = 1:numel(t)
         f = obj.vf(t(k), [X(:),Y(:)].');
-
         U(:,:,k) = reshape(f(1,:), size(X));
         V(:,:,k) = reshape(f(2,:), size(Y));
       end
@@ -266,6 +261,7 @@ classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow
         for k = 1:numel(t)
           if k == 1
             h = quiver(X,Y,U(:,:,1),V(:,:,1));
+            h.AutoScale = 'off';
           else
             h.Visible = 'off';
             h.UData = U(:,:,k);

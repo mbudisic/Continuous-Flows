@@ -1,8 +1,7 @@
-%DOUBLEGYRE
-%  Planar double-gyre system, as used by Shadden (2005)
-% Standard domain: [0,2] x [0,1]
-
 classdef DoubleGyre < ContinuousFlows.Hamiltonian2DFlow
+%DOUBLEGYRE Planar double-gyre system, as used by Shadden (2005)
+%
+% Standard domain: [0,2] x [0,1]
 
   properties
     A
@@ -22,7 +21,7 @@ classdef DoubleGyre < ContinuousFlows.Hamiltonian2DFlow
     % -- 'standard' - parameter set [0.1, 2*pi, 0.25]
     % -- 'steady'   - parameter set [0.1, 2*pi, 0.00]
 
-    
+
       if nargin < 2
         help ContinuousFlows.DoubleGyre.DoubleGyre
       end

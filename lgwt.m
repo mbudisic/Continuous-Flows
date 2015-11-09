@@ -1,5 +1,7 @@
 function [x,w]=lgwt(N,a,b)
-% [x,w]=lgwt(N,a,b) Compute Legendre-Gauss points and weights.
+% LGWT Compute Legendre-Gauss points and weights.
+%
+% [x,w]=lgwt(N,a,b)
 %
 % This script is for computing definite integrals using Legendre-Gauss
 % Quadrature. Computes the Legendre-Gauss nodes and weights  on an interval

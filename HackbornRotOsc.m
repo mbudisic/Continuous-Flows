@@ -1,5 +1,5 @@
-%%HACKBORNROTOSC
-% Hackborn Rotor-Oscillator flow -- Hackborn et al., JFM, (1997)
+classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
+%HACKBORNROTOSC Hackborn Rotor-Oscillator flow -- Hackborn et al., JFM, (1997)
 %
 % The flow evolves in the channel [-1,1] x [-inf, inf] although
 % practically [-1,1] x [-4, 4] is enough for common parameters
@@ -18,9 +18,6 @@
 %
 % Wall-induced periodic shear
 % $$\Lambda(t,x) = (x + x^2/2) \cos(\lambda t)
-
-
-classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
 
   properties
     %% flow properties
@@ -44,10 +41,14 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
     % HackbornRotOsc( dt, params )
     %
     % dt    time discretization step
-    % flowp is a 1 x 3 vector of flow parameters [epsilon, lambda, c]
-    %    epsilon -- strength of wall oscillation
-    %    lambda  -- angular frequency of wall oscillation
-    %    c       -- rotor location (between -1 and 1)
+    % flowp
+    %     -- 1 x 3 vector of coefficients [epsilon, lambda, c]
+    %                  epsilon -- strength of wall oscillation
+    %                  lambda  -- angular frequency of wall oscillation
+    %                  c       -- rotor location (between -1 and 1)
+    %     -- 'regular'      - parameter set [0.04, 2.463, 0.54]
+    %     -- 'structured'   - parameter set [0.02, 1.232, 0.54]
+    %     -- 'mixing'       - parameter set [0.02, 0.406, 0.54]
     %
     % Alternatively, set flowp to string 'Hackborn' to get a seto
     % of parameters from Hackborn 1997 paper.
@@ -61,8 +62,12 @@ classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
 
       if ischar( flowp )
         switch flowp
-          case 'Hackborn'
+          case 'regular'
+            flowp = [0.04, 2.463, 0.54];
+          case 'structured'
             flowp = [0.02, 1.232, 0.54];
+          case 'mixing'
+            flowp = [0.1, 0.406, 0.54];
           otherwise
             error('Unknown parameter set');
         end

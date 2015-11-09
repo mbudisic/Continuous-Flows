@@ -1,9 +1,6 @@
-%CONTINUOUSFLOW
-%  Abstract class specifying interface of a "continuous-time dynamical
-%  system".
-%
-
 classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
+%ODEFLOW Abstract class specifying interface of a "continuous-time dynamical system".
+%
 
   properties
     integrator

@@ -1,11 +1,9 @@
-%ABCFLOW
-%  Unsteady ABC flow.
+classdef ABCFlow < ContinuousFlows.ODEFlow
+%ABCFLOW Unsteady ABC flow.
 %
 % dx = ( A + D t sin( pi t ) ) sin(z) + C cos(y)
 % dy = B sin(x) + ( A + D t sin( pi t ) ) cos(z)
 % dz = C sin(y) + B cos(x)
-
-classdef ABCFlow < ContinuousFlows.ODEFlow
 
   properties
     % parameters for the flow

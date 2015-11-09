@@ -1,8 +1,7 @@
-%FOURGYRE
-%  Planar four-gyre system, as used by Mezic (2010)
-% Standard domain: [0,1] x [0,1]
-
 classdef FourGyre < ContinuousFlows.Hamiltonian2DFlow
+%FOURGYRE Planar four-gyre system, as used by Mezic (2010)
+%
+% Standard domain: [0,1] x [0,1]
 
   properties
     epsilon
