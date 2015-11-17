@@ -76,8 +76,6 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       flowp = num2cell(flowp);
       [obj.epsilon, obj.lambda, obj.c] = deal(flowp{:});
 
-
-
       %% Gauss-Legendre points and weights
       % on the k = [0,100] interval
       N = 150;
@@ -96,7 +94,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       obj.intprops = odeset(obj.intprops, 'MaxStep', 1e-1);
       %obj.intprops = odeset(obj.intprops, 'Stats','on' );
 
-
+      warning('Function Gamma should really be vectorized')
     end
 
     function [out] = Psi( obj, t, x, order )
@@ -212,7 +210,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 
         % zeroth-order terms
         G = Pp .* (TanhK .* CoshKX - X.*SinhKX) + Pn.*(CothK.*SinhKX - X.*CoshKX);
-
+        size(G)
         KY = K.*Y;
         CosKY = cos(KY);
 
