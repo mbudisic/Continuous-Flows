@@ -314,7 +314,6 @@ classdef (Abstract) AbstractHamiltonian2DFlow < ContinuousFlows.AbstractODEFlow2
       end
 
       [X,Y] = meshgrid(xi, yi);
-
       x = [X(:),Y(:)].';
 
       Omega = nan( [size(X), numel(t)] );
