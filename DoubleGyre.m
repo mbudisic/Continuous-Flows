@@ -1,4 +1,4 @@
-classdef DoubleGyre < ContinuousFlows.Hamiltonian2DFlow
+classdef DoubleGyre < ContinuousFlows.AbstractHamiltonian2DFlow
 %DOUBLEGYRE Planar double-gyre system, as used by Shadden (2005)
 %
 % Standard domain: [0,2] x [0,1]

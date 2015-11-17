@@ -1,4 +1,4 @@
-classdef HackbornRotOsc < ContinuousFlows.Hamiltonian2DFlow
+classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 %HACKBORNROTOSC Hackborn Rotor-Oscillator flow -- Hackborn et al., JFM, (1997)
 %
 % The flow evolves in the channel [-1,1] x [-inf, inf] although

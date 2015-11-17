@@ -1,4 +1,4 @@
-classdef Duffing < ContinuousFlows.Hamiltonian2DFlow
+classdef Duffing < ContinuousFlows.AbstractHamiltonian2DFlow
 %DUFFING Undamped Duffing oscillator.
 %
 % Energy function is alpha*x^4/4 + beta*x^2/2 + y^2/2

@@ -1,4 +1,4 @@
-classdef DuffingAllshouse < ContinuousFlows.ODEFlow2D
+classdef DuffingAllshouse < ContinuousFlows.AbstractODEFlow2D
 %DUFFINGALLSHOUSE Duffing oscillator used in Allshouse, Thiffeault, Chaos
 %(2012)
 

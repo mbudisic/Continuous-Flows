@@ -1,4 +1,4 @@
-classdef FourGyre < ContinuousFlows.Hamiltonian2DFlow
+classdef FourGyre < ContinuousFlows.AbstractHamiltonian2DFlow
 %FOURGYRE Planar four-gyre system, as used by Mezic (2010)
 %
 % Standard domain: [0,1] x [0,1]

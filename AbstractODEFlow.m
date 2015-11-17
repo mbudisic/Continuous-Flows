@@ -1,4 +1,4 @@
-classdef (Abstract) ODEFlow < ContinuousFlows.ContinuousFlow
+classdef (Abstract) AbstractODEFlow < ContinuousFlows.AbstractContinuousFlow
 %ODEFLOW Abstract class specifying interface of a "continuous-time dynamical system".
 %
 

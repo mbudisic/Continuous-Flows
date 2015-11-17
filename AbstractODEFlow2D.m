@@ -1,4 +1,4 @@
-classdef (Abstract) ODEFlow2D < ContinuousFlows.ODEFlow
+classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 %VELOCITYFIELD2D Abstract methods for 2D plots of velocity field.
 
   methods

@@ -1,4 +1,4 @@
-classdef (Abstract) Hamiltonian2DFlow < ContinuousFlows.ODEFlow2D
+classdef (Abstract) AbstractHamiltonian2DFlow < ContinuousFlows.AbstractODEFlow2D
 %HAMILTONIAN2DFLOW Abstract class specifying interface of a "continuous-time" Hamiltonian system in terms of its stream function Psi.
 
   methods (Abstract)

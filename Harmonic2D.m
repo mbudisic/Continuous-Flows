@@ -1,4 +1,4 @@
-classdef Harmonic2D < ContinuousFlows.Hamiltonian2DFlow
+classdef Harmonic2D < ContinuousFlows.AbstractHamiltonian2DFlow
 %HARMONIC2D Simple linear harmonic oscillator. Energy function is x^2/2 + y^2/2
 
   methods

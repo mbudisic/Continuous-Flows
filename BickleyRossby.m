@@ -1,4 +1,4 @@
-classdef BickleyRossby < ContinuousFlows.Hamiltonian2DFlow
+classdef BickleyRossby < ContinuousFlows.AbstractHamiltonian2DFlow
 %BICKLEYROSSBY Polar jet with Rossby traveling wave perturbation.
 %
 % Typical domain size: [0, 20] x [-4,4]

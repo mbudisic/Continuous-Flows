@@ -1,4 +1,4 @@
-classdef (Abstract) ContinuousFlow
+classdef (Abstract) AbstractContinuousFlow
 %CONTINUOUSFLOW Abstract class specifying interface of a "continuous-time dynamical system".
 %
 %  Leaves open situation where flow map is known explicitly and vector
