@@ -65,6 +65,18 @@ classdef (Abstract) ContinuousFlow
 
   methods
 
+    function Points = randomDomainSample( obj, N )
+    %RANDOMDOMAINSAMPLE Get N random points inside the domain.
+
+      Dim = size(obj.Domain, 1);
+      DomainWidth = range(obj.Domain, 2);
+
+      % random distribution scaled by domain width
+      R = bsxfun( @times, rand( Dim, N ), DomainWidth );
+      Points = bsxfun( @plus, obj.Domain(:,1), R );
+
+    end % functon
+
     function err = testJacobian( obj, t, x, delta )
     %TESTJACOBIAN Compute difference between numeric and analytic
     %             Jacobian matrix.
