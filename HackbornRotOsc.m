@@ -210,7 +210,6 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 
         % zeroth-order terms
         G = Pp .* (TanhK .* CoshKX - X.*SinhKX) + Pn.*(CothK.*SinhKX - X.*CoshKX);
-        size(G)
         KY = K.*Y;
         CosKY = cos(KY);
 
