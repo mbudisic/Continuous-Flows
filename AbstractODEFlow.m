@@ -55,7 +55,12 @@ classdef (Abstract) AbstractODEFlow < ContinuousFlows.AbstractContinuousFlow
       fprintf('Running %d initial conditions\n',N);
       s = cell(N,1);
       parfor n = 1:N
-        sol = obj.integrator( @obj.vf, [t0, t0+T], x0(:,n), obj.intprops );
+        myic = x0(:,n);
+        sol = obj.integrator( @obj.vf, [t0, t0+T], myic, obj.intprops );
+
+        assert(max(sol.x) >= max(t), ...
+               sprintf('Simulation for IC %s did not converge.',...
+                       mat2str(myic)));
 
         if returnFulltraj
           % record full trajectory
@@ -64,7 +69,7 @@ classdef (Abstract) AbstractODEFlow < ContinuousFlows.AbstractContinuousFlow
         % record just last point
         xf(:,n) = sol.y(:,end);
         fprintf('.');
-        if mod(n,30) == 0, fprintf('\n'); end
+        if mod(n,10) == 0, fprintf('\n'); end
         if returnSolutions
           s{n} = sol;
         end
