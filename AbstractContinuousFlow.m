@@ -65,8 +65,8 @@ classdef (Abstract) AbstractContinuousFlow
 
   methods
 
-    function Points = randomDomainSample( obj, N )
-    %RANDOMDOMAINSAMPLE Get N random points inside the domain.
+    function Points = sampleDomainRandom( obj, N )
+    %SAMPLEDOMAINRANDOM Get N random points inside the domain.
 
       Dim = size(obj.Domain, 1);
       DomainWidth = range(obj.Domain, 2);
@@ -76,6 +76,32 @@ classdef (Abstract) AbstractContinuousFlow
       Points = bsxfun( @plus, obj.Domain(:,1), R );
 
     end % functon
+
+    function [LinearPoints, Points] = sampleDomainGrid( obj, N )
+    %SAMPLEDOMAINGRID Get N^Dimension regular points inside the domain.
+
+      Dim = size(obj.Domain, 1);
+      DomainWidth = range(obj.Domain, 2);
+
+      % each range is a regular distribution scaled by domain width
+      R = bsxfun( @times, repmat(linspace(0,1,N), Dim, 1), DomainWidth );
+      Ranges = bsxfun( @plus, obj.Domain(:,1), R );
+      Ranges = mat2cell( Ranges, ones(size(Ranges,1),1), size(Ranges,2) );
+
+      % now to compute a tensor product
+      Points = cell(1,Dim);
+      [Points{:}] = ndgrid( Ranges{:} );
+
+      % arrange each dimension matrix into a column and then stack them
+      % together
+      LinearPoints = cell(1,Dim);
+      for k = 1:Dim
+        LinearPoints{k} = Points{k}(:);
+      end
+      LinearPoints = cat(2, LinearPoints{:}).';
+
+    end % functon
+
 
     function err = testJacobian( obj, t, x, delta )
     %TESTJACOBIAN Compute difference between numeric and analytic
