@@ -30,7 +30,7 @@ classdef DuffingAllshouse < ContinuousFlows.AbstractODEFlow2D
         help ContinuousFlows.DuffingAllshouse.DuffingAllshouse
       end
 
-      obj.Domain = [-3,3; -3,3];
+      obj.Domain = [-2,2; -2,2];
       obj.dt = dt;
 
       if ischar( flowp )
