@@ -18,18 +18,45 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 %
 % Wall-induced periodic shear
 % $$\Lambda(t,x) = (x + x^2/2) \cos(\lambda t)
+%
+% In summary, there are three non-dimensional parameters that are
+% available:
+%
+% epsilon (amplitude of periodic perturbation)
+% lambda  (frequency of periodic perturbation)
+% c       (the x in [-1,1] coordinate of the rotor)
+%
+% Hackborn (1997) lists how these parameters correspond to physical
+% parameters:
+% epsilon = V * h/(2 a^2 omega)
+% lambda  = h^2 alpha / a^2 omega
+% c       = C / h
+%
+% Where the physical parameters are
+% h       - half the width of the channel
+% V       - amplitude of the velocity of the plate oscillation
+% d = V/alpha - amplitude of the plate oscillation
+% a       - rotor radius
+% omega   - angular velocity of the rotor
+% alpha   - angular frequency of the plate oscillation
+% C       - distance of the rotor from the centerline of the channel
+%
+%
+
 
   properties
-    %% flow properties
-    epsilon % strength of wall oscillation
+
+    epsilon % (nondimensional) amplitude of wall oscillation
+
     lambda  % angular frequency of wall oscillation
+
     c       % rotor location (between -1 and 1)
   end
 
   properties (SetAccess = immutable)
 
-    %% quadrature
     quadk   % coordinate points
+
     quadw   % weights
 
   end
@@ -49,6 +76,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     %     -- 'regular'      - parameter set [0.04, 2.463, 0.54]
     %     -- 'structured'   - parameter set [0.02, 1.232, 0.54]
     %     -- 'mixing'       - parameter set [0.02, 0.406, 0.54]
+    %     -- 'margaux'      - [0.125, 0.4*pi, 0.54]
     %
     % Alternatively, set flowp to string 'Hackborn' to get a seto
     % of parameters from Hackborn 1997 paper.
@@ -68,6 +96,8 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
             flowp = [0.02, 1.232, 0.54];
           case 'mixing'
             flowp = [0.1, 0.406, 0.54];
+          case 'margaux'
+            flowp = [0.125, 0.4*pi, 0.54];
           otherwise
             error('Unknown parameter set');
         end
@@ -77,8 +107,10 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       [obj.epsilon, obj.lambda, obj.c] = deal(flowp{:});
 
       %% Gauss-Legendre points and weights
-      % on the k = [0,100] interval
-      N = 150;
+      % on the k = [0,50] interval
+
+      N = 50; % truncation order
+
       % quadk - column vector
       % quadw - row vector
       [K,W] = ContinuousFlows.lgwt(N, 0, 50);
@@ -91,10 +123,9 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
       obj.intprops = odeset(obj.intprops, 'Jacobian', @obj.jacobian);
-      obj.intprops = odeset(obj.intprops, 'MaxStep', 1e-1);
+      %obj.intprops = odeset(obj.intprops, 'MaxStep', 1e-1);
       %obj.intprops = odeset(obj.intprops, 'Stats','on' );
 
-      warning('Function Gamma should really be vectorized')
     end
 
     function [out] = Psi( obj, t, x, order )
@@ -200,7 +231,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       end
 
       out = zeros(order+1, Nx);
-      for n = 1:Nx
+      for n = 1:Nx % Nx is typically 1
 
         X = x(1,n);
         Y = x(2,n);
@@ -225,9 +256,12 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
              SinhKX.*(-Pp - K.*(Pn.*X - Pp.*TanhK));
 
         if order == 1
-          % Gauss-Legendre integral as an inner product with weight row-vector
-          out(1,n) = obj.quadw * (Gx.* CosKY);
-          out(2,n) = -obj.quadw * (G .* K.*SinKY);
+          % Gauss-Legendre integral as an inner product with weight
+          % row-vector
+
+          %          out(1,n) = obj.quadw * (Gx.* CosKY);
+          %          out(2,n) = -obj.quadw * (G .* K.*SinKY);
+          out(:,n) = obj.quadw * [(Gx.* CosKY), -(G .* K.*SinKY)];
           continue;
         end
 
@@ -273,5 +307,41 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
         out = [COS; zeros(2,Nx)];
       end
     end
+
+    function Points = sampleDomainPeaked( obj, N, sigma, mu )
+    %SAMPLEDOMAINRANDOM Get N random points inside the domain.
+    %
+    % Points = obj.sampleDomainRandom( N )
+    % Returns a Dim x N matrix of uniformly-random sampled points from the
+    % domain.
+
+      X = rand([1,N*N]);
+      Y = sampleFromPeaks( [1,N*N], sigma, mu );
+
+      Points = [X; Y];
+
+    end % functon
+
   end
 end
+
+    function samples = sampleFromPeaks( sizes, sigma,  mu )
+
+      MaxX = mu+3*sigma;
+
+      samples = nan(sizes);
+
+      C = MaxX/sigma/sqrt(2*pi);
+      f = @(x)( normpdf(x,-mu,sigma)/2 + normpdf(x,+mu,sigma)/2 );
+
+      SetMe = 1;
+
+      while SetMe <= numel(samples)
+        Y = MaxX*2*(rand(1)-0.5);
+        U = rand(1);
+        if U < f(Y)/(C*1/MaxX*2)
+          samples( SetMe ) = Y;
+          SetMe = SetMe + 1;
+        end
+      end
+    end
