@@ -122,7 +122,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
         v = obj.vf(t(k),x);
         w = complex(v(1,:),v(2,:));
         Omega_i = angle( w );
-        Norm_i = log10(abs(w));
+        Norm_i = abs(w);
         Omega(:,:,k) = reshape(Omega_i,size(X));
         Norm(:,:,k) = reshape(Norm_i,size(X));
       end
@@ -137,7 +137,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
             h.color = pcolor(X,Y,Omega(:,:,1));
             h.color.ZData(:) = -0.1;
             shading flat;
-            colormap(hsv(1024));
+            colormap(hsv(1024)); caxis([-pi,pi]);
             colorbar;
           else
             h.color.Visible ='off';
