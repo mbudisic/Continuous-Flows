@@ -67,6 +67,10 @@ classdef (Abstract) AbstractContinuousFlow
 
     function Points = sampleDomainRandom( obj, N )
     %SAMPLEDOMAINRANDOM Get N random points inside the domain.
+    %
+    % Points = obj.sampleDomainRandom( N )
+    % Returns a Dim x N matrix of uniformly-random sampled points from the
+    % domain.
 
       Dim = size(obj.Domain, 1);
       DomainWidth = range(obj.Domain, 2);
@@ -79,6 +83,10 @@ classdef (Abstract) AbstractContinuousFlow
 
     function [LinearPoints, Points] = sampleDomainGrid( obj, N )
     %SAMPLEDOMAINGRID Get N^Dimension regular points inside the domain.
+    %
+    % Points = obj.sampleDomainGrid( N )
+    % Returns a Dim x N^Dim matrix of uniformly sampled points from a
+    % grid on the domain.
 
       Dim = size(obj.Domain, 1);
       DomainWidth = range(obj.Domain, 2);
