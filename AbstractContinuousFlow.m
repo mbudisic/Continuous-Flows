@@ -8,6 +8,7 @@ classdef (Abstract) AbstractContinuousFlow
   properties
     dt % trajectory discretization step
     Domain % suggested (square) domain Ndim x 2
+    quiet = true % suppress output if true
   end
 
   methods (Abstract)
