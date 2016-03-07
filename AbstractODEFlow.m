@@ -52,7 +52,7 @@ classdef (Abstract) AbstractODEFlow < ContinuousFlows.AbstractContinuousFlow
 
       %%
       % Integrate initial conditions
-      if ~quiet, fprintf('Running %d initial conditions\n',N); end
+      if ~obj.quiet, fprintf('Running %d initial conditions\n',N); end
       s = cell(N,1);
       parfor n = 1:N
         myic = x0(:,n);
@@ -68,7 +68,7 @@ classdef (Abstract) AbstractODEFlow < ContinuousFlows.AbstractContinuousFlow
         end
         % record just last point
         xf(:,n) = sol.y(:,end);
-        if ~quiet
+        if ~obj.quiet
           fprintf('.');
           if mod(n,10) == 0, fprintf('\n'); end
         end
@@ -77,7 +77,7 @@ classdef (Abstract) AbstractODEFlow < ContinuousFlows.AbstractContinuousFlow
         end
       end
       s = [s{:}];
-      if ~quiet, fprintf('done\n'); end;
+      if ~obj.quiet, fprintf('done\n'); end;
 
       %%
       % Assign outputs
