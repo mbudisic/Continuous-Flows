@@ -309,11 +309,12 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     end
 
     function Points = sampleDomainPeaked( obj, N, sigma, mu )
-    %SAMPLEDOMAINRANDOM Get N random points inside the domain.
+    %SAMPLEDOMAINPEAKED Get N random points inside the domain.
     %
-    % Points = obj.sampleDomainRandom( N )
-    % Returns a Dim x N matrix of uniformly-random sampled points from the
-    % domain.
+    % Points = obj.sampleDomainPeaked( N )
+    % Returns a Dim x N matrix of randomly selected samples which are
+    % uniformly sampled in channel-transversal, and gaussian bimodal in channel
+    % axial direction, peaked at -mu, mu, with variance sigma.
 
       X = rand([1,N*N]);
       Y = sampleFromPeaks( [1,N*N], sigma, mu );
