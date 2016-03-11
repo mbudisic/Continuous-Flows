@@ -317,7 +317,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     % axial direction, peaked at -mu, mu, with variance sigma.
 
       X = rand([1,N*N]);
-      Y = sampleFromPeaks( [1,N*N], sigma, mu );
+      Y = obj.sampleFromPeaks( [1,N*N], sigma, mu );
 
       Points = [X; Y];
 
