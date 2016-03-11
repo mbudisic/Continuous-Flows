@@ -140,9 +140,9 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     %out = obj.Gamma(x,order);
     %out = obj.Lambda(t,x,order);
 
-    out = obj.Phi(x,order) + ...
-          obj.Gamma(x,order) + ...
-          obj.epsilon * obj.Lambda(t,x,order);
+      out = obj.Phi(x,order) + ...
+            obj.Gamma(x,order) + ...
+            obj.epsilon * obj.Lambda(t,x,order);
 
     end
 
@@ -311,13 +311,19 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     function Points = sampleDomainPeaked( obj, N, sigma, mu )
     %SAMPLEDOMAINPEAKED Get N random points inside the domain.
     %
-    % Points = obj.sampleDomainPeaked( N )
+    % Points = obj.sampleDomainPeaked( N, sigma, mu )
     % Returns a Dim x N matrix of randomly selected samples which are
     % uniformly sampled in channel-transversal, and gaussian bimodal in channel
     % axial direction, peaked at -mu, mu, with variance sigma.
 
+    assert(nargin==4,'All input arguments are required');
+
+    validateattributes(sigma,{'numeric'},{'positive','scalar','finite'});
+    validateattributes(mu,{'numeric'},{'positive','scalar','finite'});
+    validateattributes(N,{'numeric'},{'positive','scalar','finite', 'integer'});
+
       X = rand([1,N*N]);
-      Y = obj.sampleFromPeaks( [1,N*N], sigma, mu );
+      Y = sampleFromPeaks( [1,N*N], sigma, mu );
 
       Points = [X; Y];
 
@@ -326,23 +332,23 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
   end
 end
 
-    function samples = sampleFromPeaks( sizes, sigma,  mu )
+function samples = sampleFromPeaks( sizes, sigma,  mu )
 
-      MaxX = mu+3*sigma;
+  MaxX = mu+3*sigma;
 
-      samples = nan(sizes);
+  samples = nan(sizes);
 
-      C = MaxX/sigma/sqrt(2*pi);
-      f = @(x)( normpdf(x,-mu,sigma)/2 + normpdf(x,+mu,sigma)/2 );
+  C = MaxX/sigma/sqrt(2*pi);
+  f = @(x)( normpdf(x,-mu,sigma)/2 + normpdf(x,+mu,sigma)/2 );
 
-      SetMe = 1;
+  SetMe = 1;
 
-      while SetMe <= numel(samples)
-        Y = MaxX*2*(rand(1)-0.5);
-        U = rand(1);
-        if U < f(Y)/(C*1/MaxX*2)
-          samples( SetMe ) = Y;
-          SetMe = SetMe + 1;
-        end
-      end
+  while SetMe <= numel(samples)
+    Y = MaxX*2*(rand(1)-0.5);
+    U = rand(1);
+    if U < f(Y)/(C*1/MaxX*2)
+      samples( SetMe ) = Y;
+      SetMe = SetMe + 1;
     end
+  end
+end
