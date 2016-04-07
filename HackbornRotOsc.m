@@ -322,7 +322,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     validateattributes(mu,{'numeric'},{'positive','scalar','finite'});
     validateattributes(N,{'numeric'},{'positive','scalar','finite', 'integer'});
 
-      X = rand([1,N*N]);
+      X = sampleFromPeaks( [1,N*N], sigma, 0 );
       Y = sampleFromPeaks( [1,N*N], sigma, mu );
 
       Points = [X; Y];
