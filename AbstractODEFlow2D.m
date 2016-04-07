@@ -37,8 +37,8 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
         yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
       else
         assert( numel(varargin) == 2, 'We can use at most 4 arguments');
-        xi = varargin{3};
-        yi = varargin{4};
+        xi = varargin{1};
+        yi = varargin{2};
       end
 
       [X,Y] = meshgrid(xi, yi);
@@ -59,7 +59,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
           if k == 1
             h = quiver(X,Y,U(:,:,1),V(:,:,1));
             axis manual;
-            %            h.AutoScale = 'off';
+            h.AutoScale = 'off';
           else
             h.Visible = 'off';
             h.UData = U(:,:,k);
