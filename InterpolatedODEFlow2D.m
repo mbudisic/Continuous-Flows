@@ -21,6 +21,10 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
                                           period )
       %INTERPOLATEDODEFLOW2D Construct interpolated velocity flow.
       %
+      % obj = InterpolatedODEFlow2D( dt, ...
+      %                              axesNodes, ...
+      %                              UxGrid, UyGrid, ...
+      %                              period )
       % Arguments:
       % dt - timestep for the integrator
       % axesNodes - cell array of nodes along each axis (x, y, t)
@@ -31,7 +35,9 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
       %             when the samples are within one interval of the velocity
       %             field period
       %
-      %
+      % The data should be ordered in such a manner that
+      % quiver( axesNodes{1}, axesNodes{2}, UxGrid(:,:,1), UyGrid(:,:,2) )
+      % produces a valid velocity field portrait.
 
       obj.dt = dt;
 
@@ -63,8 +69,8 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
       end
 
       % interpolate the velocity field
-      obj.Ux = griddedInterpolant(axesNodes, UxGrid);
-      obj.Uy = griddedInterpolant(axesNodes, UyGrid);
+      obj.Ux = griddedInterpolant(axesNodes, permute(UxGrid,[2,1,3]));
+      obj.Uy = griddedInterpolant(axesNodes, permute(UyGrid,[2,1,3]));
 
       %% Set up integration parameters
       obj.integrator = @ode23t;
