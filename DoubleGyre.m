@@ -2,12 +2,19 @@ classdef DoubleGyre < ContinuousFlows.AbstractHamiltonian2DFlow
 %DOUBLEGYRE Planar double-gyre system, as used by Shadden (2005)
 %
 % Standard domain: [0,2] x [0,1]
+%
+% Stream function is
+%
+% Psi(x,y,t) = A sin( pi * f(x,t) ) sin( pi * y )
+%
+% where f(x,t) = a(t) x^2 + b(t) x
+% a(t) = epsilon * sin( omega * t )
+% b(t) = 1 - 2 epsilon sin( omega t )
 
   properties
-    A
-    omega
-    epsilon
-
+    A        % magnitude of the stream function
+    omega    % angular frequency of the perturbation
+    epsilon  % magnitude of the perturbation
   end
 
   methods
@@ -20,6 +27,16 @@ classdef DoubleGyre < ContinuousFlows.AbstractHamiltonian2DFlow
     % -- 1 x 3 vector of coefficients [A,omega, epsilon]
     % -- 'standard' - parameter set [0.1, 2*pi, 0.25]
     % -- 'steady'   - parameter set [0.1, 2*pi, 0.00]
+    %
+    % Standard domain: [0,2] x [0,1]
+    %
+    % Stream function is
+    % Psi(x,y,t) = A sin( pi * f(x,t) ) sin( pi * y )
+    %
+    % where f(x,t) = a(t) x^2 + b(t) x
+    % a(t) = epsilon * sin( omega t )
+    % b(t) = 1 - 2 * epsilon * sin( omega t )
+    %
 
 
       if nargin < 2
