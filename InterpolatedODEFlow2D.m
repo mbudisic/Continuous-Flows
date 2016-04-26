@@ -68,6 +68,14 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
         obj.Domain(d,2) = max(axesNodes{d});
       end
 
+      % size check
+      assert( numel(axesNodes{1}) == size(UxGrid,2) );
+      assert( numel(axesNodes{2}) == size(UxGrid,1) );
+      if numel(axesNodes) == 3
+        assert( numel(axesNodes{3}) == size(UxGrid,3) );
+      end
+      assert( all(size(UxGrid) == size(UyGrid)) );
+
       % interpolate the velocity field
       obj.Ux = griddedInterpolant(axesNodes, permute(UxGrid,[2,1,3]));
       obj.Uy = griddedInterpolant(axesNodes, permute(UyGrid,[2,1,3]));
