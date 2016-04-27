@@ -20,7 +20,7 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
     function obj = InterpolatedODEFlow2D( dt, ...
                                           axesNodes, ...
                                           UxGrid, UyGrid, ...
-                                          period )
+                                          varargin )
       %INTERPOLATEDODEFLOW2D Construct interpolated velocity flow.
       %
       % obj = InterpolatedODEFlow2D( dt, ...
@@ -53,13 +53,17 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
 
       obj.isAutonomous = (D==2);
 
-      if ~obj.isAutonomous
-        if exist('period','var') && ~isempty(period)
-          obj.period = period;
-          obj.phase = axesNodes{3}(1); % phase is the first time step
-        else
-          obj.period = NaN;
-        end
+      parsearg = inputParser;
+      parsearg.addParameter('period',NaN,@isnumeric);
+      parsearg.addParameter('interpolation','linear',@isstring);
+      parsearg.addParameter('extrapolation','nearest',@isstring);
+      parsearg.parse(varargin{:});
+      params = parsearg.Results;
+
+      obj.period = params.period;
+      if ~isnan(obj.period)
+        assert(~obj.isAutonomous, 'Periodization requires non-autnomous v.f.')
+        obj.phase = axesNodes{3}(1); % phase is the first time step
       end
 
       % establish the domain
@@ -78,8 +82,14 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
       end
 
       % interpolate the velocity field
-      obj.Ux = griddedInterpolant(axesNodes, permute(UxGrid,[2,1,3]));
-      obj.Uy = griddedInterpolant(axesNodes, permute(UyGrid,[2,1,3]));
+      obj.Ux = griddedInterpolant(axesNodes, ...
+                                  permute(UxGrid,[2,1,3]),...
+                                  params.interpolation,...
+                                  params.extrapolation);
+
+      obj.Uy = griddedInterpolant(axesNodes, permute(UyGrid,[2,1,3]),...
+                                  params.interpolation,...
+                                  params.extrapolation);
 
       %% Set up integration parameters
       obj.integrator = @ode23t;
@@ -106,7 +116,15 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
 
     % periodize time if needed
       if ~isnan(obj.period)
-        t = mod( t - obj.phase, obj.period ) + obj.phase;
+        % periodize and take phase into account
+        tt = rem( t - obj.phase, obj.period ) + obj.phase;
+
+        % because of floating point precision,
+        % tt may be different from ti even when rem has no effect
+        % therefore check manually if the change is significant
+        % and change the time input only when it is
+        sel = abs(tt-t) > 1e-14;
+        t(sel) = tt(sel);
       end
 
       % construct the appropriate input vector for the velocity field
