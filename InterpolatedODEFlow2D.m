@@ -26,16 +26,30 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
       % obj = InterpolatedODEFlow2D( dt, ...
       %                              axesNodes, ...
       %                              UxGrid, UyGrid, ...
-      %                              period )
+      %                              PROPERTY, VALUE, ... )
       % Arguments:
       % dt - timestep for the integrator
       % axesNodes - cell array of nodes along each axis (x, y, t)
       %           - if t is omitted, the flow is assumed autonomous
       % UxGrid    - x-velocity matrix array of size numel(x) X numel(y) [ X numel(t) ]
-      % UyGrid    - y-velocity matrix array of size numel(x) X numel(y) [ X numel(t) ]
-      % period    - (optional) desired period for the nonautonomous flow, e.g.,
-      %             when the samples are within one interval of the velocity
-      %             field period
+      % UyGrid    - y-velocity matrix array of size numel(x) X numel(y) [ X
+      % numel(t) ]
+      %
+      % Optional PROPERTY, VALUE pairs can be used to specify:
+      % 'period'    - if specified, the input PIV data is taken to be
+      %               periodic with the given period. This could be used
+      %               if PIV samples only a single period of a periodic
+      %               flow.
+      %
+      % 'interpolation' - interpolation method used by
+      %                   griddedInterpolant. Please see griddedInterpolant
+      %                   documentation for description of options (default:
+      %                   'linear')
+      %
+      % 'extrapolation' - interpolation method used by
+      %                   griddedInterpolant. Please see griddedInterpolant
+      %                   documentation for description of options (default:
+      %                   'nearest')
       %
       % The data should be ordered in such a manner that
       % quiver( axesNodes{1}, axesNodes{2}, UxGrid(:,:,1), UyGrid(:,:,2) )
