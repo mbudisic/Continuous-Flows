@@ -66,19 +66,30 @@ classdef (Abstract) AbstractContinuousFlow
 
   methods
 
-    function Points = sampleDomainRandom( obj, N )
+    function Points = sampleDomainRandom( obj, N, domain )
     %SAMPLEDOMAINRANDOM Get N random points inside the domain.
     %
     % Points = obj.sampleDomainRandom( N )
     % Returns a Dim x N matrix of uniformly-random sampled points from the
-    % domain.
+    % domain of the flow.
+    %
+    % Points = obj.sampleDomainRandom( N, domain )
+    %
+    % Same as above except uses a custom rectangular domain (first column are
+    % lower bounds, second column upper bounds).
+    %
+    % See also: sampleDomainGrid
 
-      Dim = size(obj.Domain, 1);
-      DomainWidth = range(obj.Domain, 2);
+      if nargin <= 2
+        domain = obj.Domain;
+      end
+
+      Dim = size(domain, 1);
+      DomainWidth = range(domain, 2);
 
       % random distribution scaled by domain width
       R = bsxfun( @times, rand( Dim, N ), DomainWidth );
-      Points = bsxfun( @plus, obj.Domain(:,1), R );
+      Points = bsxfun( @plus, domain(:,1), R );
 
     end % functon
 
@@ -86,15 +97,28 @@ classdef (Abstract) AbstractContinuousFlow
     %SAMPLEDOMAINGRID Get N^Dimension regular points inside the domain.
     %
     % Points = obj.sampleDomainGrid( N )
-    % Returns a Dim x N^Dim matrix of uniformly sampled points from a
-    % grid on the domain.
+    %
+    % Returns a Dim x N^Dim matrix of uniformly sampled points from a grid on
+    % the domain.
+    %
+    % Points = obj.sampleDomainRandom( N, domain )
+    %
+    % Same as above, except uses a custom rectangular domain (first column are
+    % lower bounds, second column upper bounds).
+    %
+    % See also: sampleDomainRandom
 
-      Dim = size(obj.Domain, 1);
-      DomainWidth = range(obj.Domain, 2);
+
+      if nargin <= 2
+        domain = obj.Domain;
+      end
+
+      Dim = size(domain, 1);
+      DomainWidth = range(domain, 2);
 
       % each range is a regular distribution scaled by domain width
       R = bsxfun( @times, repmat(linspace(0,1,N), Dim, 1), DomainWidth );
-      Ranges = bsxfun( @plus, obj.Domain(:,1), R );
+      Ranges = bsxfun( @plus, domain(:,1), R );
       Ranges = mat2cell( Ranges, ones(size(Ranges,1),1), size(Ranges,2) );
 
       % now to compute a tensor product
