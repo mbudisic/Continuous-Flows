@@ -9,7 +9,9 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
     Uy      % interpolated y-direction of the velocity field
     isAutonomous % set to true if flow is autonomous (otherwise, last
                  % coordinate is time)
-    period   %
+    period   % period of the time vector
+    phase    % phase of the time vector, it is recorded as the value of the
+             % first element in the time vector
 
   end
 
@@ -51,14 +53,13 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
 
       obj.isAutonomous = (D==2);
 
-      if exist('period','var') && ~isempty(period)
-        obj.period = period;
-      else
-        obj.period = NaN;
-      end
-
       if ~obj.isAutonomous
-        obj.period = range(axesNodes{3});
+        if exist('period','var') && ~isempty(period)
+          obj.period = period;
+          obj.phase = axesNodes{3}(1); % phase is the first time step
+        else
+          obj.period = NaN;
+        end
       end
 
       % establish the domain
@@ -71,10 +72,10 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
       % size check
       assert( numel(axesNodes{1}) == size(UxGrid,2) );
       assert( numel(axesNodes{2}) == size(UxGrid,1) );
-      if numel(axesNodes) == 3
+      assert( all(size(UxGrid) == size(UyGrid)) );
+      if ~obj.isAutonomous
         assert( numel(axesNodes{3}) == size(UxGrid,3) );
       end
-      assert( all(size(UxGrid) == size(UyGrid)) );
 
       % interpolate the velocity field
       obj.Ux = griddedInterpolant(axesNodes, permute(UxGrid,[2,1,3]));
@@ -105,7 +106,7 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
 
     % periodize time if needed
       if ~isnan(obj.period)
-        t = mod( t, obj.period );
+        t = mod( t - obj.phase, obj.period ) + obj.phase;
       end
 
       % construct the appropriate input vector for the velocity field
