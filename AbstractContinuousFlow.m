@@ -93,6 +93,60 @@ classdef (Abstract) AbstractContinuousFlow
 
     end % functon
 
+    function Points = sampleDomainGaussian( obj, N, mu, sigma, p, domain)
+    %SAMPLEDOMAINGAUSSIAN Get N random points from a sum of gaussian
+    %distributions.
+    %
+    % Points = sampleDomainGaussian( obj, N, mu, sigma, p, domain)
+    %
+    % mu (mean), sigma (covariance), p (weights) are the same as in MATLAB's
+    % gmdistribution model:
+    % - rows mu(k,:) contains coordinates of the mean for different
+    % component
+    %
+    % - layers sigma(:,:,k) contains the covariance matrix for each
+    % component
+    %
+    % - elements p(k) contain weights of each component. If empty (or
+    % omitted) all weights are taken to be equal.
+    %
+    % See `doc gmdistribution` for simplified versions of each argument.
+    %
+    % Distributions are additionally resampled until all the returned
+    % points are within the domain of the flow or within the optionally-provided
+    % domain.
+
+      if nargin < 6
+        domain = obj.Domain;
+      end
+
+      Dim = size(domain, 1);
+      assert( Dim == size(mu,2), ...
+              ['Dimension of the domain and dimension of distributions have to ' ...
+               'match'] );
+
+      if exist('p','var')
+        gaussians = gmdistribution(mu,sigma,p);
+      else
+        gaussians = gmdistribution(mu,sigma);
+      end
+
+      Points = zeros(Dim, 0);
+
+      while size(Points, 2) < N
+        Point = gaussians.random(N).';
+        % select those points whose all coordinates are within the given domain
+        sel = all( bsxfun(@ge, Point, domain(:,1)), 1) & ...
+              all( bsxfun(@le, Point, domain(:,2)), 1) ;
+        % add them to the output
+        Points = [Points, Point(:,sel)];
+      end
+      Points = Points(:,1:N);
+
+    end
+
+
+
     function [LinearPoints, Points] = sampleDomainGrid( obj, N )
     %SAMPLEDOMAINGRID Get N^Dimension regular points inside the domain.
     %
