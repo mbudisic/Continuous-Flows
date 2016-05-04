@@ -308,47 +308,5 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       end
     end
 
-    function Points = sampleDomainPeaked( obj, N, sigma, mu )
-    %SAMPLEDOMAINPEAKED Get N random points inside the domain.
-    %
-    % Points = obj.sampleDomainPeaked( N, sigma, mu )
-    % Returns a Dim x N matrix of randomly selected samples which are
-    % uniformly sampled in channel-transversal, and gaussian bimodal in channel
-    % axial direction, peaked at -mu, mu, with variance sigma.
-
-    assert(nargin==4,'All input arguments are required');
-
-    validateattributes(sigma,{'numeric'},{'positive','scalar','finite'});
-    validateattributes(mu,{'numeric'},{'positive','scalar','finite'});
-    validateattributes(N,{'numeric'},{'positive','scalar','finite', 'integer'});
-
-      X = sampleFromPeaks( [1,N*N], sigma, 0 );
-      Y = sampleFromPeaks( [1,N*N], sigma, mu );
-
-      Points = [X; Y];
-
-    end % functon
-
-  end
-end
-
-function samples = sampleFromPeaks( sizes, sigma,  mu )
-
-  MaxX = mu+3*sigma;
-
-  samples = nan(sizes);
-
-  C = MaxX/sigma/sqrt(2*pi);
-  f = @(x)( normpdf(x,-mu,sigma)/2 + normpdf(x,+mu,sigma)/2 );
-
-  SetMe = 1;
-
-  while SetMe <= numel(samples)
-    Y = MaxX*2*(rand(1)-0.5);
-    U = rand(1);
-    if U < f(Y)/(C*1/MaxX*2)
-      samples( SetMe ) = Y;
-      SetMe = SetMe + 1;
-    end
   end
 end
