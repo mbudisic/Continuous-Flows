@@ -137,7 +137,7 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
         % tt may be different from ti even when rem has no effect
         % therefore check manually if the change is significant
         % and change the time input only when it is
-        sel = abs(tt-t) > 1e-14;
+        sel = abs(tt-t)/abs(obj.period) > 1e-8;
         t(sel) = tt(sel);
       end
 
