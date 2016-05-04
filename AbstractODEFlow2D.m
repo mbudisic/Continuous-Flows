@@ -59,7 +59,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
           if k == 1
             h = quiver(X,Y,U(:,:,1),V(:,:,1));
             axis manual;
-            h.AutoScale = 'off';
+            %            h.AutoScale = 'off';
           else
             h.Visible = 'off';
             h.UData = U(:,:,k);
