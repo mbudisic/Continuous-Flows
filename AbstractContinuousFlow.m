@@ -143,6 +143,8 @@ classdef (Abstract) AbstractContinuousFlow
       end
       Points = Points(:,1:N);
 
+      % plot( Points(1,:), Points(2,:), '.'); axis equal;
+      % axis(domain([1,3,2,4])); pause
     end
 
 
