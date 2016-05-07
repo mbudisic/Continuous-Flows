@@ -55,7 +55,7 @@ classdef Vanderpol < ContinuousFlows.AbstractODEFlow2D
 
     end
 
-    function [ J ] = jacobian( obj, t, x )
+    function [ J, DeltaJ ] = jacobian( obj, t, x, delta )
     %JACOBIAN Compute Jacobian of the vector field along
     % a single trajectory given by (t, x)
     %
@@ -69,6 +69,12 @@ classdef Vanderpol < ContinuousFlows.AbstractODEFlow2D
     % J   - Jacobians
     %     - each J(:,:,i) is a dim x dim Jacobian matrix
     %     - of the vector field at [ t(i), x(i,:) ] point
+    %
+    % [ J, DeltaJ ] = obj.jacobian( ..., delta )
+    %
+    % Additionally return the difference between the numerically computed
+    % and analytically computed Jacobians.
+    %
 
       assert( numel(size(x)) == 2 );
       L = size(x,2);
@@ -81,6 +87,12 @@ classdef Vanderpol < ContinuousFlows.AbstractODEFlow2D
 
       J(2,1,:) =  -2*obj.mu*x(1,:).*x(2,:) - 1;
       J(2,2,:) =  obj.mu.*(1-x(1,:).^2);
+
+      if nargin == 4
+        Jj = jacobian@ContinuousFlows.AbstractODEFlow(obj, t, x, delta);
+        DeltaJ = Jj - J;
+      end
+
 
     end
 

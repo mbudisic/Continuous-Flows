@@ -9,6 +9,59 @@ classdef (Abstract) AbstractODEFlow < ContinuousFlows.AbstractContinuousFlow
 
   methods
 
+    function [J] = jacobian( obj, t, x, delta)
+    % JACOBIAN Compute Jacobian of the velocity field along
+    % a single trajectory given by (t, x)
+    % [ J ] = jacobian( obj, t, x )
+    %
+    % t   - row-vector of times
+    % x   - trajectory
+    %     - columns correspond to time steps
+    %     - rows correspond to states
+    % Returns:
+    % J   - Jacobians
+    %     - each J(:,:,i) is a dim x dim Jacobian matrix
+    %     - of the velocity field at [ t(i), x(i,:) ] point
+    %
+    % [ J ] = jacobian( ..., delta )
+    %
+    % Use delta as the central difference step. If omitted, delta=1e-6.
+
+      if nargin < 4
+        delta = 1e-6;
+      end
+
+      Nx = size(x,2);
+      Dim = size(x,1);
+      if isscalar(t)
+        t = repmat(t,[1,Nx]);
+      end
+
+      J = nan(Dim,Dim,Nx);
+
+      % for each point
+      for idx = 1:Nx
+
+        xx = x(:,idx);
+        tt = t(idx);
+
+        %% central difference
+        stencil = eye(Dim)*delta;
+        xi = [bsxfun(@plus, xx, stencil), ...
+              bsxfun(@minus, xx, stencil) ];
+
+        ti = repmat( tt, [size(xi,2),1] );
+        fi = obj.vf(ti, xi);
+
+        fiD = ( fi( :, 1:Dim) - fi( :, (1:Dim)+Dim) )/(2*delta);
+
+        J(:,:,idx) = fiD.';
+      end
+
+      disp('Done')
+
+    end
+
     function [ varargout ] = flow(obj, x0, T, t0)
     % FLOW Compute trajectory from t0 -> t0 + T
     %
