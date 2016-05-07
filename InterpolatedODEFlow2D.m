@@ -69,8 +69,8 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
 
       parsearg = inputParser;
       parsearg.addParameter('period',NaN,@isnumeric);
-      parsearg.addParameter('interpolation','linear',@isstring);
-      parsearg.addParameter('extrapolation','nearest',@isstring);
+      parsearg.addParameter('interpolation','linear',@ischar);
+      parsearg.addParameter('extrapolation','nearest',@ischar);
       parsearg.parse(varargin{:});
       params = parsearg.Results;
 
@@ -154,13 +154,6 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
       Uxv = obj.Ux(X,Y,t);
       Uyv = obj.Uy(X,Y,t);
       f = [Uxv(:), Uyv(:)]';
-    end
-
-    function [j] = jacobian( obj, t, x)
-    % DISABLED
-
-      j = [];
-
     end
 
   end
