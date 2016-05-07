@@ -2,6 +2,7 @@ classdef Duffing < ContinuousFlows.AbstractHamiltonian2DFlow
 %DUFFING Undamped Duffing oscillator.
 %
 % Energy function is alpha*x^4/4 + beta*x^2/2 + y^2/2
+%
 
   properties
     %% flow properties
@@ -21,9 +22,11 @@ classdef Duffing < ContinuousFlows.AbstractHamiltonian2DFlow
     %
     % dt    time discretization step
     % flowp
-    %     -- 1 x 3 vector of coefficients [alpha, beta]
+    %     -- 1 x 3 vector of coefficients [alpha, beta, epsilon, omega]
     %                  alpha   -- nonlinear spring constant
     %                  beta    -- linear spring constant
+    %                  epsilon -- strength of force
+    %                  omega   -- frequency of force
     %     -- 'doublewell'   - parameter set [1, -1, 0, 0]
 
       if nargin < 3
