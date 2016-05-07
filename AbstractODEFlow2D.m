@@ -3,6 +3,79 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 
   methods
 
+    function [varargout] = divergenceplot( obj, t, varargin)
+    %DIVERGENCEPLOT Level sets of the divergence function of the flow.
+    %
+    % DIVERGENCEPLOT(obj, t)
+    %   Plots the divergence at time t on the default grid on
+    %   obj.Domain.
+    %   If t has multiple elements, video is produced.
+    % DIVERGENCEPLOT(obj, t, R)
+    %   As above, uses R points per axis of the obj.Domain (default: R =
+    %   20).
+    % DIVERGENCEPLOT(obj, t, xi, yi)
+    %   As above, uses a tensor grid xi XX yi to plot.
+    % [h] = DIVERGENCEPLOT(...)
+    %   As above, returns graphics handle.
+    % [X,Y,DIV] = DIVERGENCEPLOT(...)
+    %   Returns spatial points and values of the divergence function.
+    %   DIV is a matrix of size [rows(X), cols(X), numel(t)]
+    %
+
+    % compute grid based on input values
+      if isempty(varargin)
+        R = 100;
+      elseif numel(varargin) == 1
+        R = varargin{1};
+      end
+
+      if numel(varargin) < 2
+        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
+        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+      else
+        assert( numel(varargin) == 2, 'We can use at most 4 arguments');
+        xi = varargin{3};
+        yi = varargin{4};
+      end
+
+      [X,Y] = meshgrid(xi, yi);
+
+      x = [X(:),Y(:)].';
+
+      Divs = nan( [size(X), numel(t)] );
+      Div_i = nan( [size(X), 1] );
+
+      for k = 1:numel(t)
+        J = obj.jacobian(t(k),x);
+        for xi = 1:size(x,2)
+          Div_i(xi) = trace( J(:,:,xi) );
+        end
+        Divs(:,:,k) = reshape(Div_i,size(X));
+      end
+
+      if nargout > 1
+        varargout = {X,Y,Divs};
+      else
+        for k = 1:numel(t)
+          if k == 1
+            [~,h] = contourf(X,Y,Divs(:,:,1));
+          else
+            h.Visible ='off';
+            h.ZData = Divs(:,:,k);
+            h.Visible = 'on';
+          end
+          title(sprintf('t = %.2f',t(k)));
+          pause(1/15);
+        end
+        if nargout > 0
+          varargout = h;
+        end
+        if nargout > 0
+          varargout = h;
+        end
+      end
+    end
+
     function [varargout] = quiverplot( obj, t, varargin )
     %QUIVERPLOT velocity field of the flow.
     %
