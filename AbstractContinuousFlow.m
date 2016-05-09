@@ -149,7 +149,7 @@ classdef (Abstract) AbstractContinuousFlow
 
 
 
-    function [LinearPoints, Points] = sampleDomainGrid( obj, N )
+    function [LinearPoints, Points] = sampleDomainGrid( obj, N, domain )
     %SAMPLEDOMAINGRID Get N^Dimension regular points inside the domain.
     %
     % Points = obj.sampleDomainGrid( N )
@@ -157,7 +157,7 @@ classdef (Abstract) AbstractContinuousFlow
     % Returns a Dim x N^Dim matrix of uniformly sampled points from a grid on
     % the domain.
     %
-    % Points = obj.sampleDomainRandom( N, domain )
+    % Points = obj.sampleDomainGrid( N, domain )
     %
     % Same as above, except uses a custom rectangular domain (first column are
     % lower bounds, second column upper bounds).
