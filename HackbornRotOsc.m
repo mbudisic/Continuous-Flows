@@ -53,6 +53,11 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     c       % rotor location (between -1 and 1)
   end
 
+  properties (Dependent = true, SetAccess = private)
+      wallPeriod % compute/set period of the wall oscillation
+  end
+
+
   properties (SetAccess = immutable)
 
     quadk   % coordinate points
@@ -62,6 +67,15 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
   end
 
   methods
+
+    function out = get.wallPeriod(obj)
+      out = 2*pi/obj.lambda;
+    end
+
+    function lambda = set.wallPeriod(obj, p)
+      lambda = 2*pi/p;
+      obj.lambda = lambda;
+    end
 
     function obj = HackbornRotOsc( dt, flowp )
     %HACKBORNROTOSC Construct a Hackborn Rotor-Oscillator flow
