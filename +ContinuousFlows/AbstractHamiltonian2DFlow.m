@@ -26,69 +26,6 @@ classdef (Abstract) AbstractHamiltonian2DFlow < ContinuousFlows.AbstractODEFlow2
 
   methods
 
-    function [ x, t ] = tumble(obj, x0, T, t0)
-    % TUMBLE Compute tumbling trajectory from t0 -> t0 + T
-    %
-    % [ x, t ] = obj.tumble(x0, T, t0)
-    % x0  - initial conditions 3 x N, each column is an i.c., last row is
-    %       the initial angle
-    % T  - duration of time
-    % t0 - initial time
-    % x = TUMBLE( x0, T, t0 )
-    %     Calculate the values of trajectories at t0+T, for the initial
-    %     condition (t0, x0)
-    % [ x, t ] = TUMBLE(x0, T, t0)
-    %     Calculate the full evolution of trajectories the initial
-    %     condition (t0, x0) until t0+T, sampled using dt of the object.
-    %      1st ind - dimension of state (1,2,3)
-    %      2st ind - time index
-    %      3rd ind - trajectory
-    %
-    % Returns:
-    % t  - row-vector of time instances
-    % x  - set of trajectories
-
-    % decide if full trajectory is returned or just the last point
-
-      if nargin < 4
-        t0 = 0;
-      end
-
-      % simulate passive tracer
-      [x, t, s] = obj.flow( x0(1:2, :), T, t0 );
-
-
-      N = size(x0,2);
-
-      ths = nan( [1, numel(t), numel(s) ] );
-      parfor k = 1:N
-        th0 = x0(3,k);
-        vf = @(t,x)obj.tumblevf(t,x,s(k));
-        [~, th] = ode113( vf , t, th0 );
-        ths(1,:,k) = th;
-      end
-
-      whos
-
-      x = cat(1, x, ths);
-
-    end
-
-    function [dth] = tumblevf(obj, t, th, sol)
-    % TUMBLEVF Velocity field for the 1D tumbling equation
-    %
-    % th - state
-    % t  - time
-    % sol  - passive tracer trajectory on the same time
-    %
-
-      x = deval(sol,t);
-      mPsi = obj.Psi( t, x, 2 );
-      mTh = [cos(th.')^2, sin(2*th.'), sin(th.').^2];
-      dth = mTh * mPsi;
-
-    end
-
     function [ f ] = vf( obj, t, x )
     % VF Compute the velocity field along a single
     % trajectory given by (t, x)
