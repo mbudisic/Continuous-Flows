@@ -57,10 +57,11 @@ classdef LorenzExtended < ContinuousFlows.AbstractODEFlow
       [obj.S, obj.R, obj.B, obj.D, obj.A] = deal(params{:});
 
       %% Set up integration parameters
-      obj.integrator = @ode23t;
+      obj.integrator = @ode45;
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
-      % obj.intprops = odeset(obj.intprops, 'Jacobian', @(t,x)obj.jacobian(t,x) );
+      obj.intprops = odeset(obj.intprops, 'MaxStep', dt);
+      obj.intprops = odeset(obj.intprops, 'Jacobian', @(t,x)obj.jacobian(t,x) );
       % obj.intprops = odeset(obj.intprops, 'Stats','on' );
 
     end
@@ -87,9 +88,9 @@ classdef LorenzExtended < ContinuousFlows.AbstractODEFlow
     y = x(2,:);
     x = x(1,:);
 
-      f(1,:) = obj.S*(y-x) + obj.S*obj.D*y.*(x-obj.R);
-      f(2,:) = obj.R*x - y - x.*z;
-      f(3,:) = x.*y-obj.B*z+obj.A*x;
+    f(1,:) = obj.S*(y-x) + obj.S*obj.D*y.*(z-obj.R);
+    f(2,:) = obj.R*x - y - x.*z;
+    f(3,:) = x.*y-obj.B*z+obj.A*x;
 
     end
 
@@ -108,25 +109,29 @@ classdef LorenzExtended < ContinuousFlows.AbstractODEFlow
     %     - each J(:,:,i) is a dim x dim Jacobian matrix
     %     - of the vector field at [ t(i), x(i,:) ] point
 
-      % assert( numel(size(x)) == 2 );
-      % L = size(x,2);
-      % assert( numel(t) == 1 || numel(t) == L, ...
-      %         ['Time is either a scalar or'...
-      %          'has to match number of steps'] );
+      assert( numel(size(x)) == 2 );
+      L = size(x,2);
+      assert( numel(t) == 1 || numel(t) == L, ...
+               ['Time is either a scalar or'...
+                'has to match number of steps'] );
 
-      % tcoeff = obj.A + obj.D*t.*sin(pi*t);
+      J = nan(3,3,L);
 
-      % J(1,1,:) =  zeros(1,1,L);
-      % J(1,2,:) = -obj.C * sin( x(2,:) );
-      % J(1,3,:) =  tcoeff .* cos( x(3,:) );
+      z = x(3,:);
+      y = x(2,:);
+      x = x(1,:);
 
-      % J(2,1,:) =  obj.B * cos( x(1,:) );
-      % J(2,2,:) =  zeros(1,1,L);
-      % J(2,3,:) = -tcoeff .* sin( x(3,:) );
+      J(1,1,:) = -obj.S;
+      J(1,2,:) = obj.S*( 1 + obj.D*(z-obj.R) );
+      J(1,3,:) = obj.S*obj.D*y;
 
-      % J(3,1,:) = -obj.B * sin( x(1,:) );
-      % J(3,2,:) =  obj.C * cos( x(2,:) );
-      % J(3,3,:) =  zeros(1,1,L);
+      J(2,1,:) = obj.R - z;
+      J(2,2,:) = -1;
+      J(2,3,:) = -x;
+
+      J(3,1,:) = y + obj.A;
+      J(3,2,:) = x;
+      J(3,3,:) = -obj.B;
 
     end
 
