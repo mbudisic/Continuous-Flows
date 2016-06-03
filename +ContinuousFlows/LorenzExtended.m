@@ -47,7 +47,6 @@ classdef LorenzExtended < ContinuousFlows.AbstractODEFlow
             params = [10, 15.8237366, 8/3, 0.0526349, 0];
           case 'pikovskyB'
             params = [10, 14.1487968, 8/3, 0.05433476, -0.56112733];
-
           otherwise
             error('Unknown parameter set');
         end
@@ -60,7 +59,7 @@ classdef LorenzExtended < ContinuousFlows.AbstractODEFlow
       obj.integrator = @ode45;
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
-      obj.intprops = odeset(obj.intprops, 'MaxStep', dt);
+      obj.intprops = odeset(obj.intprops, 'MaxStep', 5*obj.dt);
       obj.intprops = odeset(obj.intprops, 'Jacobian', @(t,x)obj.jacobian(t,x) );
       % obj.intprops = odeset(obj.intprops, 'Stats','on' );
 
