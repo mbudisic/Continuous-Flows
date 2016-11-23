@@ -196,12 +196,13 @@ classdef (Abstract) AbstractHamiltonian2DFlow < ContinuousFlows.AbstractODEFlow2
         for k = 1:numel(t)
           if k == 1
             Lmat = Psi(:,:,1);
-            V = prctile( Lmat(:) , 5:5:95 );
+            V = prctile( Lmat(:) , [1,5:5:95,99] );
             [~,h] = contourf(X,Y,Lmat, V);
+            colorbar;
           else
             h.Visible ='off';
             Lmat = Psi(:,:,k);
-            V = prctile( Lmat(:), 5:5:95 );
+            V = prctile( Lmat(:), [1,5:5:95,99] );
             h.ZData = Lmat;
             h.LevelList = V';
             h.Visible = 'on';
@@ -267,10 +268,15 @@ classdef (Abstract) AbstractHamiltonian2DFlow < ContinuousFlows.AbstractODEFlow2
       else
         for k = 1:numel(t)
           if k == 1
-            [~,h] = contourf(X,Y,Omega(:,:,1));
+            Lmat = Omega(:,:,1);
+            V = prctile( Lmat(:) , 5:5:95 );
+            [~,h] = contourf(X,Y,Lmat,V);
           else
             h.Visible ='off';
-            h.ZData = Omega(:,:,k);
+            Lmat = Omega(:,:,k);
+            V = prctile( Lmat(:), 5:5:95 );
+            h.ZData = Lmat;
+            h.LevelList = V';
             h.Visible = 'on';
           end
           title(sprintf('t = %.2f',t(k)));
