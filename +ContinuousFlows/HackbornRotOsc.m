@@ -313,7 +313,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       elseif order == 1
         out = [( 1 + x(1,:) ) .* COS;
                zeros(1,Nx) ];
-      else
+      else % order == 2
         if numel(COS) == 1
           COS = repmat(COS, [1,Nx]);
         end
