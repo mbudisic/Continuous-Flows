@@ -89,8 +89,10 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     % QUIVERPLOT(obj, t, R)
     %   As above, uses R points per axis of the obj.Domain (default: R =
     %   20).
-    % QUIVERPLOT(obj, t, xi, yi)
-    %   As above, uses a tensor grid xi XX yi to plot.
+    % QUIVERPLOT(..., 'grid', {xi, yi})
+    %   As above, uses a tensor grid xi XX yi to plot (Ignores R parameter)
+    % QUIVERPLOT(..., 'directionOnly', true)
+    %   As above, but scale all vectors to unit length.
     %
     % [h] = QUIVERPLOT(...)
     %   As above, returns graphics handle.
@@ -98,21 +100,24 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     %   Returns spatial points and components of the velocity field.
     %   U and V are matrices of size [rows(X), cols(X), numel(t)]
 
-    % compute grid based on input values
-      if isempty(varargin)
-        R = 20;
-      elseif numel(varargin) == 1
-        R = varargin{1};
-      end
+    parser = inputParser;
+    parser.addRequired('t');
+    parser.addOptional('R',20, @isscalar);
+    parser.addParameter('grid',{},@iscell);
+    parser.addParameter('directionOnly',false,@islogical);
 
-      if numel(varargin) < 2
-        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
-        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
-      else
-        assert( numel(varargin) == 2, 'We can use at most 4 arguments');
-        xi = varargin{1};
-        yi = varargin{2};
-      end
+    parser.parse(t, varargin{:});
+    params = parser.Results;
+
+    R = params.R;
+
+    if numel(params.grid) ~= 2
+      xi = linspace(obj.Domain(1,1), obj.Domain(1,2), params.R);
+      yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+    else
+      xi = params.grid{1};
+      yi = params.grid{2};
+    end
 
       [X,Y] = meshgrid(xi, yi);
 
@@ -139,11 +144,17 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
             h.VData = V(:,:,k);
             h.Visible = 'on';
           end
+          if params.directionOnly
+            M = hypot(h.UData, h.VData);
+            h.UData = 0.8 * h.UData ./ M;
+            h.VData = 0.8 * h.VData ./ M;
+            %            h.AutoScale = 'off';
+          end
           title(sprintf('t = %.2f',t(k)));
           pause(1/15);
         end
         if nargout > 0
-          varargout = h;
+          varargout = {h};
         end % if
       end % if
     end % quiverplot
