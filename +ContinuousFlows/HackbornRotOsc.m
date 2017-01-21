@@ -17,7 +17,11 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 % $$ G(x,k) = ... $$
 %
 % Wall-induced periodic shear
-% $$\Lambda(t,x) = (x + x^2/2) \cos(\lambda t)
+% $$\Lambda(t,x) = (A*x + B*x^2/2) \cos(\lambda t)
+% sets up a background linear shear profile, that oscillates in magnitude.
+%
+% In Hackborn 1997, A = 1, B=1 (still wall at x=-1, full magnitude at x=1)
+% In Weldon 2008, A = 1, B=0 (uniform background flow)
 %
 % In summary, there are three non-dimensional parameters that are
 % available:
@@ -51,6 +55,9 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     lambda  % angular frequency of wall oscillation
 
     c       % rotor location (between -1 and 1)
+
+    a       % a+bx is the profile of the background velocity flow
+    b       %
   end
 
   properties (Dependent = true, SetAccess = private)
@@ -87,10 +94,12 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     %                  epsilon -- strength of wall oscillation
     %                  lambda  -- angular frequency of wall oscillation
     %                  c       -- rotor location (between -1 and 1)
-    %     -- 'regular'      - parameter set [0.04, 2.463, 0.54]
-    %     -- 'structured'   - parameter set [0.02, 1.232, 0.54]
-    %     -- 'mixing'       - parameter set [0.02, 0.406, 0.54]
-    %     -- 'margaux'      - [0.125, 0.4*pi, 0.54]
+    %                  a       -- linear background velocity profile
+    %                  b       -- parameters: a + bx
+    %     -- 'regular'      - parameter set [0.04, 2.463, 0.54, 1, 1]
+    %     -- 'structured'   - parameter set [0.02, 1.232, 0.54, 1, 1]
+    %     -- 'mixing'       - parameter set [0.02, 0.406, 0.54, 1, 1]
+    %     -- 'margaux'      - [0.125, 0.4*pi, 0.54, 1, 0]
     %
     % Alternatively, set flowp to string 'Hackborn' to get a seto
     % of parameters from Hackborn 1997 paper.
@@ -105,20 +114,20 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       if ischar( flowp )
         switch flowp
           case 'regular'
-            flowp = [0.04, 2.463, 0.54];
+            flowp = [0.04, 2.463, 0.54, 1, 1];
           case 'structured'
-            flowp = [0.02, 1.232, 0.54];
+            flowp = [0.02, 1.232, 0.54, 1, 1];
           case 'mixing'
-            flowp = [0.1, 0.406, 0.54];
+            flowp = [0.1, 0.406, 0.54,1, 1];
           case 'margaux'
-            flowp = [0.125, 0.4*pi, 0.54];
+            flowp = [0.125, 0.4*pi, 0.54, 1, 0];
           otherwise
             error('Unknown parameter set');
         end
       end
 
       flowp = num2cell(flowp);
-      [obj.epsilon, obj.lambda, obj.c] = deal(flowp{:});
+      [obj.epsilon, obj.lambda, obj.c, obj.a, obj.b] = deal(flowp{:});
 
       %% Gauss-Legendre points and weights
       % on the k = [0,50] interval
@@ -309,15 +318,15 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       Nx = size(x,2);
       COS = cos(obj.lambda*t);
       if order == 0
-        out = ( x(1,:) + x(1,:).^2 / 2 ) .* COS;
+        out = ( obj.a*x(1,:) + obj.b*x(1,:).^2 / 2 ) .* COS;
       elseif order == 1
-        out = [( 1 + x(1,:) ) .* COS;
+        out = [( obj.a + obj.b*x(1,:) ) .* COS;
                zeros(1,Nx) ];
-      else
+      else % order == 2
         if numel(COS) == 1
           COS = repmat(COS, [1,Nx]);
         end
-        out = [COS; zeros(2,Nx)];
+        out = [obj.b*COS; zeros(2,Nx)];
       end
     end
 
