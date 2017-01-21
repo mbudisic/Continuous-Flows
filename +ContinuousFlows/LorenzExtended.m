@@ -18,14 +18,16 @@ classdef LorenzExtended < ContinuousFlows.AbstractODEFlow
   methods
 
     function obj = LorenzExtended( dt, params )
-    %ABCFLOW Construct the extended Lorenz system object.
+    %LORENZEXTENDED Construct the extended Lorenz system object.
     % LorenzExtended( dt, params )
     % Params can be:
     %
     % -- 1 x 5 vector of coefficients [S,R,B,D,A]
     % -- 'lorenz' - butterfly attractor [10, 28, 8/3, 0, 0]
-    % -- 'pikovskyA'- singular-continuous spectrum (Pikovsky, 1994)
-    % -- 'pikovskyB'- singular-continuous spectrum (Pikovsky, 1994)
+    % -- 'pikovskyA'- singular-continuous spectrum (Pikovsky, 1994) --
+    % symmetric
+    % -- 'pikovskyB'- singular-continuous spectrum (Pikovsky, 1994) --
+    % asymmetric
     %
     % where:
     % S      % Prandtl number (Lorenz)
