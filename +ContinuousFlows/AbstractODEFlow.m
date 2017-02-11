@@ -58,8 +58,6 @@ classdef (Abstract) AbstractODEFlow < ContinuousFlows.AbstractContinuousFlow
         J(:,:,idx) = fiD.';
       end
 
-      disp('Done')
-
     end
 
     function [ varargout ] = flow(obj, x0, T, t0)
