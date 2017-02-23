@@ -90,8 +90,8 @@ classdef CherryHamiltonianFlow < ContinuousFlows.AbstractHamiltonian2DFlow
         out = [dXPsi; dYPsi];
       elseif o == 2
         dXXPsi = sin(X) - sin(X).*cos(Y);
-        dXYPsi = cos(Y) - sin(X).*cos(Y);
-        dYYPsi = -cos(X).*sin(Y);
+        dYYPsi = cos(Y) - sin(X).*cos(Y);
+        dXYPsi = -cos(X).*sin(Y);
         out = [dXXPsi; dXYPsi; dYYPsi];
       else
         error('Higher orders not implemented');
