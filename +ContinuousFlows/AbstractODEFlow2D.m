@@ -78,11 +78,14 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
             hb = colorbar;
             
             if (params.normalized)
-            caxis([-1.0,1.0]);
-            title(hb,{'Divergence/','Magnitude'})
+                title(hb,{'Divergence/','Magnitude'})
             else
                 title(hb,{'Divergence'})
             end
+            
+            divslice = abs(Divs(:,:,1));
+            md = median(divslice(:));
+            caxis([-md,md]);
             
             
           else
