@@ -18,5 +18,8 @@
 %   AbstractODEFlow           - ODEFLOW Abstract class specifying interface of a "continuous-time dynamical system".
 %   AbstractODEFlow2D         - VELOCITYFIELD2D Abstract methods for 2D plots of velocity field.
 %   InterpolatedODEFlow2D     - Interpolated 2d velocity field, for example from PIV
+%   DuffingAllshouse          - Duffing oscillator used in Allshouse, Thiffeault, Chaos
+%   InterpolatedODEFlow2D     - Interpolated 2d velocity field, for example from PIV
+%   LorenzExtended            - Lorenz system, as extended by Lyubimov, Zaks (Phys D, 1983)
 %   Vanderpol                 - Vanderpol oscillator.
 
