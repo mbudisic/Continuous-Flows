@@ -27,30 +27,30 @@ classdef CherryFlow < ContinuousFlows.AbstractODEFlow2D
 
         parser = inputParser;
         parser.addRequired('dt', @(x)isscalar(x) & (x > 0));
-        parser.addOptional('parset','', @ischar);
+        parser.addOptional('parset',[], @ischar);
         parser.addParameter('b',(sqrt(5)-1)/2);
         parser.addParameter('K',1);
 
         parser.parse(dt,varargin{:});
-        
+
       obj.dt = dt;
       obj.Domain = [0, 2*pi; 0,2*pi];
-      
+
       % valid sets of parameters
-      validsets.quasiperiodic = {1, (sqrt(5)-1)/2};
+      validsets.hamiltonian = {1, (sqrt(5)-1)/2};
       validsets.sourcefractal = {3/2,0.58766578};
       validsets.sinkfractal = {1/2,0.60398640};
-      
+
       % try process the parameter set if possible
       try
           names = fieldnames(validsets);
           parset = validatestring( parser.Results.parset,...
               names );
-          
+
           fprintf(1,'Cherry flow: %s set used\n', parset);
           myset = validsets.(parset);
           [obj.K, obj.b] = deal( myset{:} );
-          
+
       catch e
           % if parameter set is not valid, use provided values
           if ~strcmpi(e.identifier,'MATLAB:unrecognizedStringChoice')
@@ -61,7 +61,7 @@ classdef CherryFlow < ContinuousFlows.AbstractODEFlow2D
           obj.b = parser.Results.b;
           obj.K = parser.Results.K;
       end
-      
+
 
       %% Set up integration parameters
       obj.integrator = @ode113;
