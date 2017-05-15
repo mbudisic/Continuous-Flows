@@ -59,7 +59,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 
     c       % rotor location (between -1 and 1)
 
-    a       % a+bx is the profile of the background velocity flow
+    a       % a+bx is the profile of the oscillating velocity flow
     b       %
   end
 

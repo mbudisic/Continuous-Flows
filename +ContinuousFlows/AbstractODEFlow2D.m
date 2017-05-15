@@ -14,7 +14,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     %   As above, uses R points per axis of the obj.Domain (default: R =
     %   20).
     % DIVERGENCEPLOT(...,'grid', {xi,yi} )
-    %   As above, uses a tensor grid xi XX yi to plot. xi and yi are 
+    %   As above, uses a tensor grid xi XX yi to plot. xi and yi are
     %   1D vectors.
     % [h] = DIVERGENCEPLOT(...,'normalized',true)
     %   Normalizes divergence by magnitude of velocity.
@@ -22,13 +22,13 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     %   Returns spatial points and values of the divergence function.
     %   DIV is a matrix of size [rows(X), cols(X), numel(t)]
     %
-    
+
     parser = inputParser;
     parser.addRequired('t');
     parser.addParameter('R',100, @(x)x>0);
     parser.addParameter('grid',{}, @iscell);
     parser.addParameter('normalized',false,@islogical);
-    
+
     parser.parse(t, varargin{:});
     params = parser.Results;
 
@@ -55,16 +55,16 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
         J = obj.jacobian(t(k),x);
         for ii = 1:size(x,2)
           Div_i(ii) = trace( J(:,:,ii) );
-        end        
+        end
         Divs(:,:,k) = reshape(Div_i,size(X));
-        
+
         % normalize by velocity magnitude if requested
         if (params.normalized)
          f = obj.vf(t(k),x);
-         f_norm = reshape( hypot( f(1,:), f(2,:) ), size(X) );        
+         f_norm = reshape( hypot( f(1,:), f(2,:) ), size(X) );
          Divs(:,:,k) = Divs(:,:,k) ./ f_norm;
         end
-        
+
         %% plotting
         if nargout <= 1
           if k == 1
@@ -76,30 +76,30 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
             ylim([min(yi),max(yi)]);
 
             hb = colorbar;
-            
+
             if (params.normalized)
                 title(hb,{'Divergence/','Magnitude'})
             else
                 title(hb,{'Divergence'})
             end
-            
+
             divslice = abs(Divs(:,:,1));
             md = median(divslice(:));
             caxis([-md,md]);
-            
-            
+
+
           else
             h.Visible ='off';
             h.CData = Divs(:,:,k);
             h.Visible = 'on';
-            
+
           end
           title(sprintf('t = %.2f',t(k)));
           pause(1/15);
         end
-        
+
       end
-      
+
       if nargout == 1
           varargout = h;
       elseif nargout > 1
@@ -215,7 +215,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 
     % compute grid based on input values
       if isempty(varargin)
-        R = 100;
+        R = 20;
       elseif numel(varargin) == 1
         R = varargin{1};
       end
