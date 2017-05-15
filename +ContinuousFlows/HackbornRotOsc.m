@@ -16,6 +16,9 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 % where
 % $$ G(x,k) = ... $$
 %
+% This integral is evaluated using Legendre-Gauss weights written by Greg von
+% Winckel's (as lgwt)
+%
 % Wall-induced periodic shear
 % $$\Lambda(t,x) = (A*x + B*x^2/2) \cos(\lambda t)
 % sets up a background linear shear profile, that oscillates in magnitude.
@@ -90,19 +93,17 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     %
     % dt    time discretization step
     % flowp
-    %     -- 1 x 3 vector of coefficients [epsilon, lambda, c]
+    %     -- 1 x 3 vector of coefficients [epsilon, lambda, c, a, b]
     %                  epsilon -- strength of wall oscillation
     %                  lambda  -- angular frequency of wall oscillation
     %                  c       -- rotor location (between -1 and 1)
-    %                  a       -- linear background velocity profile
-    %                  b       -- parameters: a + bx
+    %                  a,b     -- linear background cross-channel velocity
+    %                             profile ( a + b x )
     %     -- 'regular'      - parameter set [0.04, 2.463, 0.54, 1, 1]
     %     -- 'structured'   - parameter set [0.02, 1.232, 0.54, 1, 1]
     %     -- 'mixing'       - parameter set [0.02, 0.406, 0.54, 1, 1]
     %     -- 'margaux'      - [0.125, 0.4*pi, 0.54, 1, 0]
     %
-    % Alternatively, set flowp to string 'Hackborn' to get a seto
-    % of parameters from Hackborn 1997 paper.
 
       if nargin < 2
         help ContinuousFlows.HackbornRotOsc.HackbornRotOsc
@@ -145,7 +146,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
       obj.intprops = odeset(obj.intprops, 'Jacobian', @obj.jacobian);
-      %obj.intprops = odeset(obj.intprops, 'MaxStep', 1e-1);
+      obj.intprops = odeset(obj.intprops, 'MaxStep', 0.05*2*pi/obj.lambda);
       %obj.intprops = odeset(obj.intprops, 'Stats','on' );
 
     end
@@ -157,14 +158,9 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     %  second derivatives are sorted as
     %  [xx; xy; yy]
 
-
-    %out = obj.Phi(x,order);
-    %out = obj.Gamma(x,order);
-    %out = obj.Lambda(t,x,order);
-
-      out = obj.Phi(x,order) + ...
-            obj.Gamma(x,order) + ...
-            obj.epsilon * obj.Lambda(t,x,order);
+        out = obj.Phi(x,order) + ...
+              obj.Gamma(x,order) + ...
+              obj.epsilon * obj.Lambda(t,x,order);
 
     end
 
