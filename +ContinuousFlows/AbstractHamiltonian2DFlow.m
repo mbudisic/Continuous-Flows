@@ -175,8 +175,8 @@ classdef (Abstract) AbstractHamiltonian2DFlow < ContinuousFlows.AbstractODEFlow2
         yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
       else
         assert( numel(varargin) == 2, 'We can use at most 4 arguments');
-        xi = varargin{3};
-        yi = varargin{4};
+        xi = varargin{1};
+        yi = varargin{2};
       end
 
       [X,Y] = meshgrid(xi, yi);
