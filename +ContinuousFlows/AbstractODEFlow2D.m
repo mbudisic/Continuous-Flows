@@ -23,16 +23,16 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     %   DIV is a matrix of size [rows(X), cols(X), numel(t)]
     %
 
-    parser = inputParser;
-    parser.addRequired('t');
-    parser.addParameter('R',100, @(x)x>0);
-    parser.addParameter('grid',{}, @iscell);
-    parser.addParameter('normalized',false,@islogical);
+      parser = inputParser;
+      parser.addRequired('t');
+      parser.addParameter('R',100, @(x)x>0);
+      parser.addParameter('grid',{}, @iscell);
+      parser.addParameter('normalized',false,@islogical);
 
-    parser.parse(t, varargin{:});
-    params = parser.Results;
+      parser.parse(t, varargin{:});
+      params = parser.Results;
 
-    % compute grid based on input values
+      % compute grid based on input values
 
       if isempty(params.grid)
         xi = linspace(obj.Domain(1,1), obj.Domain(1,2), params.R);
@@ -60,27 +60,27 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 
         % normalize by velocity magnitude if requested
         if (params.normalized)
-         f = obj.vf(t(k),x);
-         f_norm = reshape( hypot( f(1,:), f(2,:) ), size(X) );
-         Divs(:,:,k) = Divs(:,:,k) ./ f_norm;
+          f = obj.vf(t(k),x);
+          f_norm = reshape( hypot( f(1,:), f(2,:) ), size(X) );
+          Divs(:,:,k) = Divs(:,:,k) ./ f_norm;
         end
 
         %% plotting
         if nargout <= 1
           if k == 1
             h = image('XData',xi,...
-                'YData',yi, ...
-                'CData',Divs(:,:,1),...
-                'CDataMapping','scaled');
+                      'YData',yi, ...
+                      'CData',Divs(:,:,1),...
+                      'CDataMapping','scaled');
             xlim([min(xi),max(xi)]);
             ylim([min(yi),max(yi)]);
 
             hb = colorbar;
 
             if (params.normalized)
-                title(hb,{'Divergence/','Magnitude'})
+              title(hb,{'Divergence/','Magnitude'})
             else
-                title(hb,{'Divergence'})
+              title(hb,{'Divergence'})
             end
 
             divslice = abs(Divs(:,:,1));
@@ -101,9 +101,9 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       end
 
       if nargout == 1
-          varargout = h;
+        varargout = h;
       elseif nargout > 1
-          varargout = {X,Y,Divs};
+        varargout = {X,Y,Divs};
       end
     end
 
@@ -131,26 +131,26 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     %   Returns spatial points and components of the velocity field.
     %   U and V are matrices of size [rows(X), cols(X), numel(t)]
 
-    parser = inputParser;
-    parser.addRequired('t');
-    parser.addOptional('R',20, @isscalar);
-    parser.addParameter('grid',{},@iscell);
-    parser.addParameter('directionOnly',false,@islogical);
+      parser = inputParser;
+      parser.addRequired('t');
+      parser.addOptional('R',20, @isscalar);
+      parser.addParameter('grid',{},@iscell);
+      parser.addParameter('directionOnly',false,@islogical);
 
-    parser.parse(t, varargin{:});
-    params = parser.Results;
+      parser.parse(t, varargin{:});
+      params = parser.Results;
 
-    R = params.R;
+      R = params.R;
 
-    if numel(params.grid) ~= 2
-      xi = linspace(obj.Domain(1,1), obj.Domain(1,2), params.R);
-      yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
-    else
-      xi = params.grid{1};
-      yi = params.grid{2};
-      validateattributes( xi, {'numeric'},{'vector','real'});
-      validateattributes( yi, {'numeric'},{'vector','real'});
-    end
+      if numel(params.grid) ~= 2
+        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), params.R);
+        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+      else
+        xi = params.grid{1};
+        yi = params.grid{2};
+        validateattributes( xi, {'numeric'},{'vector','real'});
+        validateattributes( yi, {'numeric'},{'vector','real'});
+      end
 
       [X,Y] = ndgrid(xi, yi); % use NDGrid format
 
@@ -270,6 +270,100 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
         end
       end
     end % polarvfplot
+
+    function Points = samplePolygonBoundary( obj, N, polygon )
+    %SAMPLEPOLYGONBOUNDARY Return uniform sample of points along polygon
+    %boundary of a domain.
+    %
+    % Points = obj.samplePolygonBoundary( N, polygon )
+    % Returns a 2 x N matrix of points sampled along the boundary of the
+    % polygon (2 x M matrix), uniformly gridded as possible.
+    %
+    %
+    % See also: sampleDomainGrid
+
+      validateattributes( polygon, ...
+                          {'numeric'}, ...
+                          {'nrows',2, 'nonnan','finite'},'',...
+                          'polygon',3);
+
+      S = size(polygon,2); % number of sides
+
+      validateattributes( N, {'numeric'}, {'>=', size(polygon, 2)},'',...
+                          'N',2 );
+
+      % compute lengths of sides
+      P = [polygon, polygon(:,1)];
+      D = sum( (P(:,2:end) - P(:,1:end-1)).^2, 1 ).^(1/2);
+
+      % compute number of points along each side
+      ni = fix( N * D / sum(D) );
+
+      % if points need to be subtracted, subtract them from the
+      % smallest-gap side
+      while sum(ni) > N
+        [~,argmin] = min( D ./ ni );
+        ni(argmin) = ni(argmin) - 1;
+      end
+
+      % if points need to be added, add them to the largest-gap side
+      while sum(ni) < N
+        [~,argmax] = max( D ./ ni );
+        ni(argmax) = ni(argmax) + 1;
+      end
+
+      % linearly sample each side and add to the output
+      Points = [];
+      for s = 1:S
+        SidePoints = [ linspace(P(1,s), P(1,s+1), ni(s)+1); ...
+                       linspace(P(2,s), P(2,s+1), ni(s)+1) ];
+        Points = [Points, SidePoints(:,1:end-1)];
+      end
+
+    end
+
+    function Points = samplePolygonInterior( obj, N, polygon )
+    %SAMPLEPOLYGONINTERIOR Return a sample of initial conditions inside the polygon.
+    %
+    % Points = obj.samplePolygonBoundary( N, polygon, samplefun )
+    % Returns a 2 x N matrix of points sampled on the inside of the
+    % polygon, using sample-and-reject technique.
+    %
+    % See also: samplePolygonaBoundary, sampleDomainRandom
+
+      validateattributes( polygon, ...
+                          {'numeric'}, ...
+                          {'nrows',2, 'nonnan','finite'},'',...
+                          'polygon',3);
+
+      S = size(polygon,2); % number of sides
+
+      domain = [min(polygon(1,:)), max(polygon(1,:)); ...
+                min(polygon(2,:)), max(polygon(2,:)) ];
+
+      PolyArea = polyarea( polygon(1,:), polygon(2,:) );
+      DomainArea = range(domain(1,:))*range(domain(2,:));
+      OversamplingRatio = DomainArea/PolyArea;
+
+      Points = [];
+
+      while size(Points,2) < N
+
+        % sample the surrounding square domain
+        NewSample = obj.sampleDomainRandom( fix(OversamplingRatio*N),...
+                                            domain );
+
+        % choose the points inside the polygon
+        sel = inpolygon( NewSample(1,:), NewSample(2,:),...
+                         polygon(1,:), polygon(2,:) );
+
+        NewSample = NewSample(:, sel);
+
+        % add the required number of points
+        Deficit = N - size(Points,2);
+        Points = [Points, NewSample(:,1:min(Deficit, size(NewSample,2)))];
+      end
+    end
 
 
   end % methods
