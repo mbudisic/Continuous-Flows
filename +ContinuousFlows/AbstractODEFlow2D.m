@@ -322,5 +322,49 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 
     end
 
+    function Points = samplePolygonInterior( obj, N, polygon )
+    %SAMPLEPOLYGONINTERIOR Return a sample of initial conditions inside the polygon.
+    %
+    % Points = obj.samplePolygonBoundary( N, polygon, samplefun )
+    % Returns a 2 x N matrix of points sampled on the inside of the
+    % polygon, using sample-and-reject technique.
+    %
+    % See also: samplePolygonaBoundary, sampleDomainRandom
+
+      validateattributes( polygon, ...
+                          {'numeric'}, ...
+                          {'nrows',2, 'nonnan','finite'},'',...
+                          'polygon',3);
+
+      S = size(polygon,2); % number of sides
+
+      domain = [min(polygon(1,:)), max(polygon(1,:)); ...
+                min(polygon(2,:)), max(polygon(2,:)) ];
+
+      PolyArea = polyarea( polygon(1,:), polygon(2,:) );
+      DomainArea = range(domain(1,:))*range(domain(2,:));
+      OversamplingRatio = DomainArea/PolyArea;
+
+      Points = [];
+
+      while size(Points,2) < N
+
+        % sample the surrounding square domain
+        NewSample = obj.sampleDomainRandom( fix(OversamplingRatio*N),...
+                                            domain );
+
+        % choose the points inside the polygon
+        sel = inpolygon( NewSample(1,:), NewSample(2,:),...
+                         polygon(1,:), polygon(2,:) );
+
+        NewSample = NewSample(:, sel);
+
+        % add the required number of points
+        Deficit = N - size(Points,2);
+        Points = [Points, NewSample(:,1:min(Deficit, size(NewSample,2)))];
+      end
+    end
+
+
   end % methods
 end % classdef
