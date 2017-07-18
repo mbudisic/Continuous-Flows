@@ -30,8 +30,8 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       parser.addParameter('normalized',false,@islogical);
 
       parser.parse(t, varargin{:});
-      params = parser.Results;
 
+      params = parser.Results;
       % compute grid based on input values
 
       if isempty(params.grid)
@@ -199,37 +199,44 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     %   Plots the scalar (z-component) angle field at time t on the
     %   default grid on obj.Domain.
     %   If t has multiple elements, video is produced.
-    %
-    % h = POLARVFPLOT(obj, t, R)
+    % POLARVFPLOT(...,'R', R)
     %   As above, uses R points per axis of the obj.Domain (default: R =
     %   20).
-    % h = POLARVFPLOT(obj, t, xi, yi)
-    %   As above, uses a tensor grid xi XX yi to plot.
-    % [h] = POLARVFPLOT(...)
-    %   As above, returns graphics handle.
-    % [X,Y,ANGLE,NORM] = POLARVFPLOT(...)
-    %   Returns spatial points and values of the angle.
-    %   OMEGA is a matrix of size [rows(X), cols(X), numel(t)]
+    % POLARVFPLOT(...,'grid', {xi,yi} )
+    %   As above, uses a tensor grid xi XX yi to plot. xi and yi are
+    %   1D vectors.
+    % [h] = POLARVFPLOT(...,'logarithmic',true)
+    %   Plots color scale based on the log-magnitude of the velocity.
+    % [X,Y,Omega,Norm] = POLARVFPLOT(...)
+    %   Returns spatial points and velocity angle and magnitude (or its logarithm).
+    %   Omega, Norm are matrices of size [rows(X), cols(X), numel(t)]
     %
 
+      parser = inputParser;
+      parser.addRequired('t');
+      parser.addParameter('R',20, @(x)x>0);
+      parser.addParameter('grid',{}, @iscell);
+      parser.addParameter('logarithmic',false,@islogical);
 
-    % compute grid based on input values
-      if isempty(varargin)
-        R = 20;
-      elseif numel(varargin) == 1
-        R = varargin{1};
-      end
+      parser.parse(t, varargin{:});
+      params = parser.Results;
 
-      if numel(varargin) < 2
-        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
-        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+      t = params.t;
+
+      % compute grid based on input values
+
+      if isempty(params.grid)
+        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), params.R);
+        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), params.R);
       else
-        assert( numel(varargin) == 2, 'We can use at most 4 arguments');
-        xi = varargin{3};
-        yi = varargin{4};
+        xi = params.grid{1};
+        yi = params.grid{2};
+        validateattributes( xi, {'numeric'},{'vector','real'});
+        validateattributes( yi, {'numeric'},{'vector','real'});
       end
 
       [X,Y] = ndgrid(xi, yi);
+
       x = [X(:),Y(:)].';
 
       Omega = nan( [size(X), numel(t)] );
@@ -242,6 +249,10 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
         Norm_i = abs(w);
         Omega(:,:,k) = reshape(Omega_i,size(X));
         Norm(:,:,k) = reshape(Norm_i,size(X));
+      end
+
+      if parser.Results.logarithmic
+        Norm = log10(Norm);
       end
 
       if nargout > 1
