@@ -26,12 +26,13 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 % In Hackborn 1997, A = 1, B=1 (still wall at x=-1, full magnitude at x=1)
 % In Weldon 2008, A = 1, B=0 (uniform background flow)
 %
-% In summary, there are three non-dimensional parameters that are
-% available:
+% In summary, the non-dimensional parameters that are
+% available are:
 %
 % epsilon (amplitude of periodic perturbation)
 % lambda  (frequency of periodic perturbation)
 % c       (the x in [-1,1] coordinate of the rotor)
+% tau     (period of periodic perturbation -- 2pi/lambda)
 %
 % Hackborn (1997) lists how these parameters correspond to physical
 % parameters:
@@ -64,7 +65,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
   end
 
   properties (Dependent = true, SetAccess = private)
-      wallPeriod % compute/set period of the wall oscillation
+      tau % compute/set period of the wall oscillation
   end
 
 
@@ -78,11 +79,11 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 
   methods
 
-    function out = get.wallPeriod(obj)
+    function out = get.tau(obj)
       out = 2*pi/obj.lambda;
     end
 
-    function lambda = set.wallPeriod(obj, p)
+    function lambda = set.tau(obj, p)
       lambda = 2*pi/p;
       obj.lambda = lambda;
     end
@@ -146,7 +147,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
       obj.intprops = odeset(obj.intprops, 'Jacobian', @obj.jacobian);
-      obj.intprops = odeset(obj.intprops, 'MaxStep', (5e-2)*2*pi/obj.lambda);
+      obj.intprops = odeset(obj.intprops, 'MaxStep', obj.tau*5/100);f
       %obj.intprops = odeset(obj.intprops, 'Stats','on' );
 
     end
