@@ -215,77 +215,77 @@ classdef (Abstract) AbstractHamiltonian2DFlow < ContinuousFlows.AbstractODEFlow2
       end
     end
 
-    function [varargout] = vorticityplot( obj, t, varargin)
-    %VORTICITYPLOT Level sets of the vorticity of the flow.
-    %
-    % VORTICITYPLOT(obj, t)
-    %   Plots the scalar (z-component) vorticity field at time t on the
-    %   default grid on obj.Domain.
-    %   If t has multiple elements, video is produced.
-    %
-    % h = VORTICITYPLOT(obj, t, R)
-    %   As above, uses R points per axis of the obj.Domain (default: R =
-    %   20).
-    % h = VORTICITYPLOT(obj, t, xi, yi)
-    %   As above, uses a tensor grid xi XX yi to plot.
-    % [h] = VORTICITYPLOT(...)
-    %   As above, returns graphics handle.
-    % [X,Y,OMEGA] = VORTICITYPLOT(...)
-    %   Returns spatial points and values of the vorticity.
-    %   OMEGA is a matrix of size [rows(X), cols(X), numel(t)]
-    %
+    % function [varargout] = vorticityplot( obj, t, varargin)
+    % %VORTICITYPLOT Level sets of the vorticity of the flow.
+    % %
+    % % VORTICITYPLOT(obj, t)
+    % %   Plots the scalar (z-component) vorticity field at time t on the
+    % %   default grid on obj.Domain.
+    % %   If t has multiple elements, video is produced.
+    % %
+    % % h = VORTICITYPLOT(obj, t, R)
+    % %   As above, uses R points per axis of the obj.Domain (default: R =
+    % %   20).
+    % % h = VORTICITYPLOT(obj, t, xi, yi)
+    % %   As above, uses a tensor grid xi XX yi to plot.
+    % % [h] = VORTICITYPLOT(...)
+    % %   As above, returns graphics handle.
+    % % [X,Y,OMEGA] = VORTICITYPLOT(...)
+    % %   Returns spatial points and values of the vorticity.
+    % %   OMEGA is a matrix of size [rows(X), cols(X), numel(t)]
+    % %
 
 
-    % compute grid based on input values
-      if isempty(varargin)
-        R = 100;
-      elseif numel(varargin) == 1
-        R = varargin{1};
-      end
+    % % compute grid based on input values
+    %   if isempty(varargin)
+    %     R = 100;
+    %   elseif numel(varargin) == 1
+    %     R = varargin{1};
+    %   end
 
-      if numel(varargin) < 2
-        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
-        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
-      else
-        assert( numel(varargin) == 2, 'We can use at most 4 arguments');
-        xi = varargin{3};
-        yi = varargin{4};
-      end
+    %   if numel(varargin) < 2
+    %     xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
+    %     yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+    %   else
+    %     assert( numel(varargin) == 2, 'We can use at most 4 arguments');
+    %     xi = varargin{3};
+    %     yi = varargin{4};
+    %   end
 
-      [X,Y] = meshgrid(xi, yi);
-      x = [X(:),Y(:)].';
+    %   [X,Y] = meshgrid(xi, yi);
+    %   x = [X(:),Y(:)].';
 
-      Omega = nan( [size(X), numel(t)] );
+    %   Omega = nan( [size(X), numel(t)] );
 
-      for k = 1:numel(t)
-        Omega_i = obj.vorticity(t(k),x);
-        Omega(:,:,k) = reshape(Omega_i,size(X));
-      end
+    %   for k = 1:numel(t)
+    %     Omega_i = obj.vorticity(t(k),x);
+    %     Omega(:,:,k) = reshape(Omega_i,size(X));
+    %   end
 
-      if nargout > 1
-        varargout = {X,Y,Omega};
-      else
-        for k = 1:numel(t)
-          if k == 1
-            Lmat = Omega(:,:,1);
-            V = prctile( Lmat(:) , 5:5:95 );
-            [~,h] = contourf(X,Y,Lmat,V);
-          else
-            h.Visible ='off';
-            Lmat = Omega(:,:,k);
-            V = prctile( Lmat(:), 5:5:95 );
-            h.ZData = Lmat;
-            h.LevelList = V';
-            h.Visible = 'on';
-          end
-          title(sprintf('t = %.2f',t(k)));
-          pause(1/15);
-        end
-        if nargout > 0
-          varargout = h;
-        end
-      end
-    end
+    %   if nargout > 1
+    %     varargout = {X,Y,Omega};
+    %   else
+    %     for k = 1:numel(t)
+    %       if k == 1
+    %         Lmat = Omega(:,:,1);
+    %         V = prctile( Lmat(:) , 5:5:95 );
+    %         [~,h] = contourf(X,Y,Lmat,V);
+    %       else
+    %         h.Visible ='off';
+    %         Lmat = Omega(:,:,k);
+    %         V = prctile( Lmat(:), 5:5:95 );
+    %         h.ZData = Lmat;
+    %         h.LevelList = V';
+    %         h.Visible = 'on';
+    %       end
+    %       title(sprintf('t = %.2f',t(k)));
+    %       pause(1/15);
+    %     end
+    %     if nargout > 0
+    %       varargout = h;
+    %     end
+    %   end
+    % end
 
 
   end

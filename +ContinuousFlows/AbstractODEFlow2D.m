@@ -1,5 +1,5 @@
 classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
-%VELOCITYFIELD2D Abstract methods for 2D plots of velocity field.
+%ABSTRACTODEFLOW2D Abstract methods for 2D plots of velocity field.
 
   methods
 
@@ -70,7 +70,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
           if k == 1
             h = image('XData',xi,...
                       'YData',yi, ...
-                      'CData',Divs(:,:,1),...
+                      'CData',Divs(:,:,1)',...
                       'CDataMapping','scaled');
             xlim([min(xi),max(xi)]);
             ylim([min(yi),max(yi)]);
@@ -106,6 +106,116 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
         varargout = {X,Y,Divs};
       end
     end
+
+    function [varargout] = vorticityplot( obj, t, varargin)
+    %VORTICITYPLOT Level sets of the vorticity function of the flow.
+    %
+    % VORTICITYPLOT(obj, t)
+    %   Plots the vorticity at time t on the default grid on
+    %   obj.Domain.
+    %   If t has multiple elements, video is produced.
+    % VORTICITYPLOT(...,'R', R)
+    %   As above, uses R points per axis of the obj.Domain (default: R =
+    %   20).
+    % VORTICITYPLOT(...,'grid', {xi,yi} )
+    %   As above, uses a tensor grid xi XX yi to plot. xi and yi are
+    %   1D vectors.
+    % [h] = VORTICITYPLOT(...,'normalized',true)
+    %   Normalizes vorticity by magnitude of velocity.
+    % [X,Y,VORT] = VORTICITYPLOT(...)
+    %   Returns spatial points and values of the vorticity function.
+    %   VORT is a matrix of size [rows(X), cols(X), numel(t)]
+    %
+
+      parser = inputParser;
+      parser.addRequired('t');
+      parser.addParameter('R',100, @(x)x>0);
+      parser.addParameter('grid',{}, @iscell);
+      parser.addParameter('normalized',false,@islogical);
+
+      parser.parse(t, varargin{:});
+
+      params = parser.Results;
+      % compute grid based on input values
+
+      if isempty(params.grid)
+        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), params.R);
+        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), params.R);
+      else
+        xi = params.grid{1};
+        yi = params.grid{2};
+        validateattributes( xi, {'numeric'},{'vector','real'});
+        validateattributes( yi, {'numeric'},{'vector','real'});
+      end
+
+      [X,Y] = ndgrid(xi, yi);
+
+      x = [X(:),Y(:)].';
+
+      Vorts = nan( [size(X), numel(t)] ); % vorticitys
+      Vort_i = nan( [size(X), 1] ); % unsorted vorticitys
+
+      for k = 1:numel(t)
+        J = obj.jacobian(t(k),x);
+        for ii = 1:size(x,2)
+          Vort_i(ii) = trace( J(:,:,ii) * [0, -1; 1 0] );
+        end
+        Vorts(:,:,k) = reshape(Vort_i,size(X));
+
+        % normalize by velocity magnitude if requested
+        if (params.normalized)
+          f = obj.vf(t(k),x);
+          f_norm = reshape( hypot( f(1,:), f(2,:) ), size(X) );
+          Vorts(:,:,k) = Vorts(:,:,k) ./ f_norm;
+        end
+
+
+        %% plotting
+        if nargout <= 1
+          if k == 1
+            h = image('XData',xi,...
+                      'YData',yi, ...
+                      'CData',Vorts(:,:,1)',...
+                      'CDataMapping','scaled');
+            xlim([min(xi),max(xi)]);
+            ylim([min(yi),max(yi)]);
+
+            hb = colorbar;
+
+            if (params.normalized)
+              title(hb,{'Vorticity/','Magnitude'})
+            else
+              title(hb,{'Vorticity'})
+            end
+
+            md = max(max(abs(Vorts(:,:,1))));
+            M = autumn(256);
+            M = M(1:200,:);
+            D = flipud(summer(256));
+            D = D(56:256,:);
+            colormap( [M;D] );
+            caxis([-md,md]);
+
+
+          else
+            h.Visible ='off';
+            h.CData = Vorts(:,:,k);
+            h.Visible = 'on';
+
+          end
+          title(sprintf('t = %.2f',t(k)));
+          pause(1/15);
+        end
+
+      end
+
+      if nargout == 1
+        varargout = h;
+      elseif nargout > 1
+        varargout = {X,Y,Vorts};
+      end
+    end
+
 
     function [varargout] = quiverplot( obj, t, varargin )
     %QUIVERPLOT velocity field of the flow.
@@ -338,7 +448,9 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     %
     % Points = obj.samplePolygonBoundary( N, polygon, samplefun )
     % Returns a 2 x N matrix of points sampled on the inside of the
-    % polygon, using sample-and-reject technique.
+    % polygon (2 x M matrix), using sample-and-reject technique.
+    %
+    %
     %
     % See also: samplePolygonaBoundary, sampleDomainRandom
 
