@@ -147,7 +147,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
       obj.intprops = odeset(obj.intprops, 'Jacobian', @obj.jacobian);
-      obj.intprops = odeset(obj.intprops, 'MaxStep', obj.tau*5/100);f
+      obj.intprops = odeset(obj.intprops, 'MaxStep', obj.tau*5/100);
       %obj.intprops = odeset(obj.intprops, 'Stats','on' );
 
     end
