@@ -16,6 +16,9 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 % where
 % $$ G(x,k) = ... $$
 %
+% This integral is evaluated using Legendre-Gauss weights written by Greg von
+% Winckel's (as lgwt)
+%
 % Wall-induced periodic shear
 % $$\Lambda(t,x) = (A*x + B*x^2/2) \cos(\lambda t)
 % sets up a background linear shear profile, that oscillates in magnitude.
@@ -23,12 +26,13 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 % In Hackborn 1997, A = 1, B=1 (still wall at x=-1, full magnitude at x=1)
 % In Weldon 2008, A = 1, B=0 (uniform background flow)
 %
-% In summary, there are three non-dimensional parameters that are
-% available:
+% In summary, the non-dimensional parameters that are
+% available are:
 %
 % epsilon (amplitude of periodic perturbation)
 % lambda  (frequency of periodic perturbation)
 % c       (the x in [-1,1] coordinate of the rotor)
+% tau     (period of periodic perturbation -- 2pi/lambda)
 %
 % Hackborn (1997) lists how these parameters correspond to physical
 % parameters:
@@ -56,12 +60,12 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 
     c       % rotor location (between -1 and 1)
 
-    a       % a+bx is the profile of the background velocity flow
+    a       % a+bx is the profile of the oscillating velocity flow
     b       %
   end
 
   properties (Dependent = true, SetAccess = private)
-      wallPeriod % compute/set period of the wall oscillation
+      tau % compute/set period of the wall oscillation
   end
 
 
@@ -75,11 +79,11 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 
   methods
 
-    function out = get.wallPeriod(obj)
+    function out = get.tau(obj)
       out = 2*pi/obj.lambda;
     end
 
-    function lambda = set.wallPeriod(obj, p)
+    function lambda = set.tau(obj, p)
       lambda = 2*pi/p;
       obj.lambda = lambda;
     end
@@ -90,19 +94,17 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     %
     % dt    time discretization step
     % flowp
-    %     -- 1 x 3 vector of coefficients [epsilon, lambda, c]
+    %     -- 1 x 3 vector of coefficients [epsilon, lambda, c, a, b]
     %                  epsilon -- strength of wall oscillation
     %                  lambda  -- angular frequency of wall oscillation
     %                  c       -- rotor location (between -1 and 1)
-    %                  a       -- linear background velocity profile
-    %                  b       -- parameters: a + bx
+    %                  a,b     -- linear background cross-channel velocity
+    %                             profile ( a + b x )
     %     -- 'regular'      - parameter set [0.04, 2.463, 0.54, 1, 1]
     %     -- 'structured'   - parameter set [0.02, 1.232, 0.54, 1, 1]
     %     -- 'mixing'       - parameter set [0.02, 0.406, 0.54, 1, 1]
     %     -- 'margaux'      - [0.125, 0.4*pi, 0.54, 1, 0]
     %
-    % Alternatively, set flowp to string 'Hackborn' to get a seto
-    % of parameters from Hackborn 1997 paper.
 
       if nargin < 2
         help ContinuousFlows.HackbornRotOsc.HackbornRotOsc
@@ -145,7 +147,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
       obj.intprops = odeset(obj.intprops, 'Jacobian', @obj.jacobian);
-      %obj.intprops = odeset(obj.intprops, 'MaxStep', 1e-1);
+      obj.intprops = odeset(obj.intprops, 'MaxStep', obj.tau*5/100);
       %obj.intprops = odeset(obj.intprops, 'Stats','on' );
 
     end
@@ -157,14 +159,9 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     %  second derivatives are sorted as
     %  [xx; xy; yy]
 
-
-    %out = obj.Phi(x,order);
-    %out = obj.Gamma(x,order);
-    %out = obj.Lambda(t,x,order);
-
-      out = obj.Phi(x,order) + ...
-            obj.Gamma(x,order) + ...
-            obj.epsilon * obj.Lambda(t,x,order);
+        out = obj.Phi(x,order) + ...
+              obj.Gamma(x,order) + ...
+              obj.epsilon * obj.Lambda(t,x,order);
 
     end
 
