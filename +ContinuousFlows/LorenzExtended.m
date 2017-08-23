@@ -23,7 +23,8 @@ classdef LorenzExtended < ContinuousFlows.AbstractODEFlow
     % Params can be:
     %
     % -- 1 x 5 vector of coefficients [S,R,B,D,A]
-    % -- 'lorenz' - butterfly attractor [10, 28, 8/3, 0, 0]
+    % -- 'lorenz' - butterfly attractor [10, 28, 8/3, 0, 0] [mixing,
+    % Luzzato 2005]
     % -- 'pikovskyA'- singular-continuous spectrum (Pikovsky, 1994)
     % -- 'pikovskyB'- singular-continuous spectrum (Pikovsky, 1994)
     %
