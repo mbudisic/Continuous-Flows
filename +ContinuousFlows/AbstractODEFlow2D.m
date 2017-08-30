@@ -17,6 +17,12 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     % JACOBIANPLOT(...,'grid', {xi,yi} )
     %   As above, uses a tensor grid xi XX yi to plot. xi and yi are
     %   1D vectors.
+    % JACOBIANPLOT(...,'usePcolor', true )
+    %   Uses pcolor w/flat shading instead of imagesc to plot.
+    %
+    % JACOBIANPLOT(...,'useDivergentColor', true )
+    %   Use symmetric and divergent color scheme.
+    %
     % [X,Y,DIV] = JACOBIANPLOT(...)
     %   Returns spatial points and values of the jacobian function.
     %   DIV is a matrix of size [rows(X), cols(X), numel(t)]
@@ -27,7 +33,10 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       parser.addRequired('fn', @(v)isa(v,'function_handle') );
       parser.addParameter('R',100, @(x)x>0);
       parser.addParameter('grid',{}, @iscell);
-      parser.addParameter('name','Scalar Function',@(v)ischar(v) || iscell(v));
+      parser.addParameter('name','Scalar Function',@(v)ischar(v) || ...
+                          iscell(v));
+      parser.addParameter('usePcolor',false,@islogical);
+      parser.addParameter('useDivergentColor',false,@islogical);
 
       parser.parse(t, varargin{:});
 
@@ -61,9 +70,18 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
         %% plotting
         if nargout <= 1
           if k == 1
-            h = imagesc('XData',xi,...
-                        'YData',yi, ...
-                        'CData',JacS(:,:,1)');
+            % transpose b/c ndgrid was used
+            if ~params.usePcolor
+              h = imagesc('XData',xi,...
+                          'YData',yi, ...
+                          'CData',JacS(:,:,1)');
+            else
+              h = pcolor(xi,...
+                         yi, ...
+                         JacS(:,:,1)');
+              shading flat;
+            end
+
 
             xlim([min(xi),max(xi)]);
             ylim([min(yi),max(yi)]);
@@ -71,9 +89,26 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
             hb = colorbar;
             title(hb,params.name)
 
+            if params.useDivergentColor
+              AX = caxis;
+              md = max(abs(JacS(:)));
+              md = min([md, 1e6]);
+
+              M = autumn(256);
+              M = M(1:225,:);
+              D = flipud(summer(256));
+              D = D(31:256,:);
+              colormap( [M;D] );
+              caxis([-md, md]);
+            end
+
           else
             h.Visible ='off';
-            h.CData = JacS(:,:,k)';
+            if ~params.usePcolor
+              h.CData = JacS(:,:,k)';
+            else
+              h.ZData = JacS(:,:,k)';
+            end
 
             h.Visible = 'on';
 
@@ -155,7 +190,9 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 
         % normalize by velocity magnitude if requested
         if (params.normalized)
-          Divs = log10( Divs ./ GradNorms );
+          sel = GradNorms(:) == 0;
+          Divs = log10(abs(Divs) ./ GradNorms);
+          Divs(sel) = NaN;
         end
 
         %% plotting
