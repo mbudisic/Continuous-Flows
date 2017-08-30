@@ -3,6 +3,95 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 
   methods
 
+    function [varargout] = jacobianplot( obj, t, varargin)
+    %JACOBIANPLOT Level sets of the scalar function of
+    %the velocity field jacobian.
+    %
+    % JACOBIANPLOT(obj, t, fn)
+    %   Plots the values of fn(Jacobian) at time t on the default grid on
+    %   obj.Domain. fn has to be a scalar function of a matrix (no vectorization)
+    %   If t has multiple elements, video is produced.
+    % JACOBIANPLOT(...,'R', R)
+    %   As above, uses R points per axis of the obj.Domain (default: R =
+    %   20).
+    % JACOBIANPLOT(...,'grid', {xi,yi} )
+    %   As above, uses a tensor grid xi XX yi to plot. xi and yi are
+    %   1D vectors.
+    % [X,Y,DIV] = JACOBIANPLOT(...)
+    %   Returns spatial points and values of the jacobian function.
+    %   DIV is a matrix of size [rows(X), cols(X), numel(t)]
+    %
+
+      parser = inputParser;
+      parser.addRequired('t');
+      parser.addRequired('fn', @(v)isa(v,'function_handle') );
+      parser.addParameter('R',100, @(x)x>0);
+      parser.addParameter('grid',{}, @iscell);
+      parser.addParameter('name','Scalar Function',@(v)ischar(v) || iscell(v));
+
+      parser.parse(t, varargin{:});
+
+      params = parser.Results;
+      % compute grid based on input values
+
+      if isempty(params.grid)
+        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), params.R);
+        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), params.R);
+      else
+        xi = params.grid{1};
+        yi = params.grid{2};
+        validateattributes( xi, {'numeric'},{'vector','real'});
+        validateattributes( yi, {'numeric'},{'vector','real'});
+      end
+
+      [X,Y] = ndgrid(xi, yi);
+
+      x = [X(:),Y(:)].';
+
+      JacS = nan( [size(X), numel(t)] ); % jacobian scalars
+      JacS_i = nan( [size(X), 1] ); % unsorted jacobian scalars
+
+      for k = 1:numel(t)
+        J = obj.jacobian(t(k),x);
+        for ii = 1:size(x,2)
+          JacS_i(ii) = parser.Results.fn( J(:,:,ii) );
+        end
+        JacS(:,:,k) = reshape(JacS_i,size(X));
+
+        %% plotting
+        if nargout <= 1
+          if k == 1
+            h = imagesc('XData',xi,...
+                        'YData',yi, ...
+                        'CData',JacS(:,:,1)');
+
+            xlim([min(xi),max(xi)]);
+            ylim([min(yi),max(yi)]);
+
+            hb = colorbar;
+            title(hb,params.name)
+
+          else
+            h.Visible ='off';
+            h.CData = JacS(:,:,k)';
+
+            h.Visible = 'on';
+
+          end
+          title(sprintf('t = %.2f',t(k)));
+          pause(1/15);
+        end
+
+      end
+
+      if nargout == 1
+        varargout = h;
+      elseif nargout > 1
+        varargout = {X,Y,JacS};
+      end
+    end
+
+
     function [varargout] = divergenceplot( obj, t, varargin)
     %DIVERGENCEPLOT Level sets of the divergence function of the flow.
     %
@@ -17,7 +106,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     %   As above, uses a tensor grid xi XX yi to plot. xi and yi are
     %   1D vectors.
     % [h] = DIVERGENCEPLOT(...,'normalized',true)
-    %   Normalizes divergence by magnitude of velocity.
+    %   Normalizes divergence by 2-norm of the Jacobian.
     % [X,Y,DIV] = DIVERGENCEPLOT(...)
     %   Returns spatial points and values of the divergence function.
     %   DIV is a matrix of size [rows(X), cols(X), numel(t)]
@@ -51,46 +140,58 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       Divs = nan( [size(X), numel(t)] ); % divergences
       Div_i = nan( [size(X), 1] ); % unsorted divergences
 
+      GradNorms = nan( [size(X), numel(t)] ); % divergences
+      GradNorm_i = nan( [size(X), 1] ); % unsorted divergences
+
+
       for k = 1:numel(t)
         J = obj.jacobian(t(k),x);
         for ii = 1:size(x,2)
           Div_i(ii) = trace( J(:,:,ii) );
+          GradNorm_i(ii) = norm( J(:,:,ii) );
         end
         Divs(:,:,k) = reshape(Div_i,size(X));
+        GradNorms(:,:,k) = reshape(GradNorm_i,size(X));
 
         % normalize by velocity magnitude if requested
         if (params.normalized)
-          f = obj.vf(t(k),x);
-          f_norm = reshape( hypot( f(1,:), f(2,:) ), size(X) );
-          Divs(:,:,k) = Divs(:,:,k) ./ f_norm;
+          Divs = log10( Divs ./ GradNorms );
         end
 
         %% plotting
         if nargout <= 1
           if k == 1
-            h = image('XData',xi,...
+            h = imagesc('XData',xi,...
                       'YData',yi, ...
-                      'CData',Divs(:,:,1)',...
-                      'CDataMapping','scaled');
+                      'CData',Divs(:,:,1)');
+
             xlim([min(xi),max(xi)]);
             ylim([min(yi),max(yi)]);
 
             hb = colorbar;
 
             if (params.normalized)
-              title(hb,{'Divergence/','Magnitude'})
+              title(hb,{'Divergence/','2-Norm of Jacobian'})
             else
               title(hb,{'Divergence'})
             end
 
-            divslice = abs(Divs(:,:,1));
-            md = median(divslice(:));
-            caxis([-md,md]);
+            AX = caxis;
+            md = max(abs(Divs(:)));
+            md = min([md, 1e6]);
+
+            M = autumn(256);
+            M = M(1:200,:);
+            D = flipud(summer(256));
+            D = D(56:256,:);
+            colormap( [M;D] );
+            caxis([-md, md]);
 
 
           else
             h.Visible ='off';
-            h.CData = Divs(:,:,k);
+            h.CData = Divs(:,:,k)';
+
             h.Visible = 'on';
 
           end
@@ -188,18 +289,21 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
               title(hb,{'Vorticity'})
             end
 
-            md = max(max(abs(Vorts(:,:,1))));
+            AX = caxis;
+            md = max(abs(Vorts(:)));
+            md = min([md, 1e6]);
+
             M = autumn(256);
             M = M(1:200,:);
             D = flipud(summer(256));
             D = D(56:256,:);
             colormap( [M;D] );
-            caxis([-md,md]);
+            caxis([-md, md]);
 
 
           else
             h.Visible ='off';
-            h.CData = Vorts(:,:,k);
+            h.CData = Vorts(:,:,k)';
             h.Visible = 'on';
 
           end
