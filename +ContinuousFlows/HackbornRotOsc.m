@@ -122,7 +122,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
           case 'mixing'
             flowp = [0.1, 0.406, 0.54,1, 1];
           case 'margaux'
-            flowp = [0.125, 0.4*pi, 0.54, 0, 0];
+            flowp = [0.125, 0.4*pi, -0.54, 1, 0];
           otherwise
             error('Unknown parameter set');
         end
