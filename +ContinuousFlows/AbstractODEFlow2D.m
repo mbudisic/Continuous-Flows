@@ -199,8 +199,8 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
         if nargout <= 1
           if k == 1
             h = imagesc('XData',xi,...
-                      'YData',yi, ...
-                      'CData',Divs(:,:,1)');
+                        'YData',yi, ...
+                        'CData',Divs(:,:,1)');
 
             xlim([min(xi),max(xi)]);
             ylim([min(yi),max(yi)]);
@@ -387,6 +387,8 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       parser.addOptional('R',20, @isscalar);
       parser.addParameter('grid',{},@iscell);
       parser.addParameter('directionOnly',false,@islogical);
+      parser.addParameter('cmap',parula(128));
+
 
       parser.parse(t, varargin{:});
       params = parser.Results;
@@ -421,7 +423,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
           if k == 1
             h = quiver(X,Y,U(:,:,1),V(:,:,1));
             axis manual;
-            %            h.AutoScale = 'off';
+            %h.AutoScale = 'off';
           else
             h.Visible = 'off';
             h.UData = U(:,:,k);
@@ -437,6 +439,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
           title(sprintf('t = %.2f',t(k)));
           pause(1/15);
         end
+        h = obj.colorQuiver(h,params.cmap);
         if nargout > 0
           varargout = {h};
         end % if
@@ -629,6 +632,44 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       end
     end
 
+
+    function q = colorQuiver(obj,q, cmap)
+    % COLORQUIVER
+    %
+    % Based on:
+    %
+    % https://stackoverflow.com/questions/29632430/quiver3-arrow-color-corresponding-to-magnitude
+    %
+
+    %// Compute the magnitude of the vectors
+      mags = sqrt(sum(cat(2, q.UData(:), q.VData(:), ...
+                          reshape(q.WData, numel(q.UData), [])).^2, 2));
+
+      %// Get the current colormap
+      if nargin <= 1
+        currentColormap = colormap(gca);
+      else
+        currentColormap = cmap;
+      end
+
+      %// Now determine the color to make each arrow using a colormap
+      [~, ~, ind] = histcounts(mags, size(currentColormap, 1));
+
+      %// Now map this to a colormap to get RGB
+      cmap = uint8(ind2rgb(ind(:), currentColormap) * 255);
+      cmap(:,:,4) = 255;
+      cmap = permute(repmat(cmap, [1 3 1]), [2 1 3]);
+
+      %// We repeat each color 3 times (using 1:3 below) because each arrow has 3 vertices
+      set(q.Head, ...
+          'ColorBinding', 'interpolated', ...
+          'ColorData', reshape(cmap(1:3,:,:), [], 4).');   %'
+
+      %// We repeat each color 2 times (using 1:2 below) because each tail has 2 vertices
+      set(q.Tail, ...
+          'ColorBinding', 'interpolated', ...
+          'ColorData', reshape(cmap(1:2,:,:), [], 4).');
+    end
 
   end % methods
 end % classdef
