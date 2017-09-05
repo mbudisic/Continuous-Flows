@@ -387,7 +387,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       parser.addOptional('R',20, @isscalar);
       parser.addParameter('grid',{},@iscell);
       parser.addParameter('directionOnly',false,@islogical);
-      parser.addParameter('cmap',parula(128));
+      parser.addParameter('cmap',winter(128));
 
 
       parser.parse(t, varargin{:});
