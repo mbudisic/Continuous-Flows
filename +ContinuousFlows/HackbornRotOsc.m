@@ -161,7 +161,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 
         out = obj.Phi(x,order) + ...
               obj.Gamma(x,order) + ...
-              obj.epsilon * obj.Lambda(t,x,order);
+              obj.epsilon * obj.lambda * obj.Lambda(t,x,order);
 
     end
 

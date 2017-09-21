@@ -61,7 +61,7 @@ classdef LorenzExtended < ContinuousFlows.AbstractODEFlow
       obj.integrator = @ode45;
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
-      obj.intprops = odeset(obj.intprops, 'MaxStep', 5*obj.dt);
+      obj.intprops = odeset(obj.intprops, 'MaxStep', 0.05);
       obj.intprops = odeset(obj.intprops, 'Jacobian', @(t,x)obj.jacobian(t,x) );
       % obj.intprops = odeset(obj.intprops, 'Stats','on' );
 
