@@ -5,7 +5,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 % practically [-1,1] x [-4, 4] is enough for common parameters
 %
 % Stream function $\Psi(x,y,t)$ is given by three components:
-% $$ \Psi(x,y,t) = \Phi(x,y) + \Gamma(x,y) + \epsilon \Lambda(t,x) $$
+% $$ \Psi(x,y,t) = \Phi(x,y) + \Gamma(x,y) + \epsilon * \lambda * \Lambda(t,x) $$
 %
 % Free rotlet:
 % $$ \Phi(x,y) = (1/2) \log \frac{\cosh(\pi y/2) - \cos[\pi(x-c)/2]}{\cosh(\pi
@@ -23,13 +23,13 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 % $$\Lambda(t,x) = (A*x + B*x^2/2) \cos(\lambda t)
 % sets up a background linear shear profile, that oscillates in magnitude.
 %
-% In Hackborn 1997, A = 1, B=1 (still wall at x=-1, full magnitude at x=1)
+% In Hackborn 1997, A = 1/lambda, B=1/lambda (still wall at x=-1, full magnitude at x=1)
 % In Weldon 2008, A = 1, B=0 (uniform background flow)
 %
 % When B = 0, the coordinate transformation
-% x -> x, y -> y + K sin(\lambda t)
+% x -> x, y -> y - K sin(\lambda t)
 % transforms to a comoving frame of the rotor. Constant
-% K = -A\epsilon/\lambda
+% K = A*epsilon
 % can be evaluated as Kcom.
 %
 % In summary, the non-dimensional parameters that are
@@ -93,7 +93,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
         warning('Comoving frame is not valid as B is not zero.')
       end
 
-      K = -obj.A*obj.epsilon/obj.lambda;
+      K = obj.A*obj.epsilon;
 
     end
 
@@ -118,9 +118,9 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     %                  c       -- rotor location (between -1 and 1)
     %                  a,b     -- linear background cross-channel velocity
     %                             profile ( a + b x )
-    %     -- 'regular'      - parameter set [0.04, 2.463, 0.54, 1, 1]
-    %     -- 'structured'   - parameter set [0.02, 1.232, 0.54, 1, 1]
-    %     -- 'mixing'       - parameter set [0.02, 0.406, 0.54, 1, 1]
+    %     -- 'regular'      - parameter set [0.04, 2.463, 0.54, 1/lambda, 1/lambda]
+    %     -- 'structured'   - parameter set [0.02, 1.232, 0.54, 1/lambda, 1/lambda]
+    %     -- 'mixing'       - parameter set [0.02, 0.406, 0.54, 1/lambda, 1/lambda]
     %     -- 'margaux'      - [0.125, 0.4*pi, 0.54, 1, 0]
     %
 
@@ -134,11 +134,11 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       if ischar( flowp )
         switch flowp
           case 'regular'
-            flowp = [0.04, 2.463, 0.54, 1, 1];
+            flowp = [0.04, 2.463, 0.54, 1/2.463, 1/2.463];
           case 'structured'
-            flowp = [0.02, 1.232, 0.54, 1, 1];
+            flowp = [0.02, 1.232, 0.54, 1/1.232, 1/1.232];
           case 'mixing'
-            flowp = [0.1, 0.406, 0.54, 1, 1];
+            flowp = [0.1, 0.406, 0.54, 1/0.406, 1/0.406];
           case 'margaux'
             flowp = [0.125, 0.4*pi, -0.54, 1, 0];
           otherwise
@@ -179,7 +179,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 
       out = obj.Phi(x,order) + ...
             obj.Gamma(x,order) + ...
-            obj.epsilon  * obj.Lambda(t,x,order);
+            obj.epsilon  * obj.lambda * obj.Lambda(t,x,order);
 
     end
 
