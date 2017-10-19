@@ -79,6 +79,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       Scalar = nan( [size(X), numel(t)] ); % jacobian scalars
       Scalar_i = nan( [size(X), 1] ); % unsorted jacobian scalars
 
+
       for k = 1:numel(t)
         if params.components(2)
           J = obj.jacobian(t(k),x);
@@ -108,6 +109,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
             case '000'
               error('You must select some variables to as inputs into the function');
           end
+
 
         end
         Scalar(:,:,k) = reshape(Scalar_i,size(X));
@@ -175,7 +177,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       if nargout == 1
         varargout = h;
       elseif nargout > 1
-        varargout = {X,Y,Scalar};
+        varargout = {X,Y,Scalar,xi,yi};
       end
     end
 
