@@ -1,5 +1,6 @@
-classdef HackbornRotOscFrozenSwap < ContinuousFlows.AbstractHamiltonian2DFlow
-%HACKBORNROTOSCFROZEN Hackborn Rotor-Oscillator flow -- Hackborn et al., JFM, (1997)
+classdef HackbornWeldonRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
+%HACKBORNWELDONROTOSC Hackborn-Weldon Rotor-Oscillator flow -- Hackborn et
+%al., JFM, (1997), Weldon (2008) JFM
 %
 % The flow evolves in the channel [-1,1] x [-inf, inf] although
 % practically [-1,1] x [-4, 4] is enough for common parameters. In this
@@ -110,9 +111,9 @@ classdef HackbornRotOscFrozenSwap < ContinuousFlows.AbstractHamiltonian2DFlow
       obj.lambda = lambda;
     end
 
-    function obj = HackbornRotOscFrozenSwap( dt, flowp )
-    %HACKBORNROTOSC Construct a Hackborn Rotor-Oscillator flow
-    % HackbornRotOsc( dt, params )
+    function obj = HackbornWeldonRotOsc( dt, flowp )
+    %HACKBORNWELDONROTOSC Construct a Hackborn Rotor-Oscillator flow
+    % HackbornWeldonRotOsc( dt, params )
     %
     % dt    time discretization step
     % flowp
@@ -129,7 +130,7 @@ classdef HackbornRotOscFrozenSwap < ContinuousFlows.AbstractHamiltonian2DFlow
     %
 
       if nargin < 2
-        help ContinuousFlows.HackbornRotOsc.HackbornRotOsc
+        help ContinuousFlows.HackbornWeldonRotOsc.HackbornWeldonRotOsc
       end
 
       obj.Domain = [-2,2; -1,1];

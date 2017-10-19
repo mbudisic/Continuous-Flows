@@ -1,4 +1,4 @@
-classdef HackbornRotOscFrozen < ContinuousFlows.AbstractHamiltonian2DFlow
+classdef HackbornWeldonRotOscVertical < ContinuousFlows.AbstractHamiltonian2DFlow
 %HACKBORNROTOSCFROZEN Hackborn Rotor-Oscillator flow -- Hackborn et al., JFM, (1997)
 %
 % The flow evolves in the channel [-1,1] x [-inf, inf] although
@@ -106,9 +106,9 @@ classdef HackbornRotOscFrozen < ContinuousFlows.AbstractHamiltonian2DFlow
       obj.lambda = lambda;
     end
 
-    function obj = HackbornRotOscFrozen( dt, flowp )
+    function obj = HackbornWeldonRotOscVertical( dt, flowp )
     %HACKBORNROTOSC Construct a Hackborn Rotor-Oscillator flow
-    % HackbornRotOsc( dt, params )
+    % HackbornWeldonRotOscVertical( dt, params )
     %
     % dt    time discretization step
     % flowp
@@ -125,7 +125,7 @@ classdef HackbornRotOscFrozen < ContinuousFlows.AbstractHamiltonian2DFlow
     %
 
       if nargin < 2
-        help ContinuousFlows.HackbornRotOsc.HackbornRotOsc
+        help ContinuousFlows.HackbornWeldonRotOscVertical.HackbornWeldonRotOscVertical
       end
 
       obj.Domain = [-1,1; -2,2];
@@ -176,7 +176,7 @@ classdef HackbornRotOscFrozen < ContinuousFlows.AbstractHamiltonian2DFlow
     %
     %  second derivatives are sorted as
     %  [xx; xy; yy]
-    
+
     x(2,:,:) = x(2,:,:) - obj.epsilon*sin( obj.lambda * t );
 
       out = obj.Phi(x,order) + ...
