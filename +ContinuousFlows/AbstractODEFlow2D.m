@@ -10,11 +10,11 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     %
     % SCALARPLOT(obj, t, fn)
     %   Plots the values of the scalar function fn at time t on the default grid on
-    %   obj.Domain. Depending on the values of useVelocity and useJacobian
-    %   fn should either be fn(VF), fn(J), or fn(VF,J) function
-    % SCALARPLOT(obj, 'useVelocity',truefalse)
-    %   Use velocity instead of velocity field as input into scalar
-    %   function. (default: true)
+    %   obj.Domain. Depending on value of 'components' parameter
+    %   fn should either be in format fn(VF), fn(VF,X), fn(J,X), fn(VF,J,X), etc.
+    % SCALARPLOT(obj, 'components',[true,false,false])
+    %   Three-element logical arrays specifying whether [VELOCITY,
+    %   JACOBIAN, POSITION] arrays will be used as inputs into the scalar function.
     % SCALARPLOT(obj, 'useJacobian',truefalse)
     %   Use jacobian instead of velocity field as input into scalar
     %   function. (default: false)
@@ -28,11 +28,15 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     %   Name of the scalar function (used to label color scale)
     % SCALARPLOT(...,'useImage', truefalse )
     %   Use image/imagesc format of plots. (default:true)
-    % SCALARPLOT(...,'plotf', handle )
-    %   Use 'plotf' instead of 'imagesc' as the plotting function (make
+    % SCALARPLOT(...,'plotFn', handle )
+    %   Use 'plotFn' instead of 'imagesc' as the plotting function (make
     %   sure 'useImage' is set consistently.
-    % SCALARPLOT(...,'useDivergentColor', true )
-    %   Use symmetric and divergent color scheme.
+    % SCALARPLOT(...,'colorScheme', [] )
+    %   Set to 'divergent' for zero-centered divergent colorscheme (for
+    %   positive/negative values) or 'periodic' for periodic scheme (for
+    %   angles).
+    % SCALARPLOT(...,'noplot', true )
+    %   Do not create plots. Just return scalar fields.
     %
     % [X,Y,DIV] = SCALARPLOT(...)
     %   Returns spatial points and values of the scalar function.
@@ -42,19 +46,20 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       parser = inputParser;
       parser.addRequired('t');
       parser.addRequired('fn', @(v)isa(v,'function_handle') );
-      parser.addParameter('useVelocity',true,@islogical);
-      parser.addParameter('useJacobian',false,@islogical);
+      parser.addParameter('components',[true,false,false]);
       parser.addParameter('R',100, @(x)x>0);
       parser.addParameter('grid',{}, @iscell);
       parser.addParameter('name','Scalar Function',@(v)ischar(v) || ...
                           iscell(v));
       parser.addParameter('useImage',true,@islogical);
       parser.addParameter('plotFn',@imagesc,@(v)isa(v,'function_handle'))
-      parser.addParameter('useDivergentColor',false,@islogical);
+      parser.addParameter('colorScheme',[],@ischar);
+      parser.addParameter('noplot',false,@islogical);
 
       parser.parse(t, varargin{:});
 
       params = parser.Results;
+      componentString = erase(num2str(double(params.components)),' ');
       % compute grid based on input values
 
       if isempty(params.grid)
@@ -75,28 +80,40 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       Scalar_i = nan( [size(X), 1] ); % unsorted jacobian scalars
 
       for k = 1:numel(t)
-        if parser.Results.useJacobian
+        if params.components(2)
           J = obj.jacobian(t(k),x);
         end
-        if parser.Results.useVelocity
+        if params.components(1)
           VF = obj.vf(t(k),x);
         end
 
         for ii = 1:size(x,2)
           % use both
-          if parser.Results.useJacobian && parser.Results.useVelocity
-            Scalar_i(ii) = parser.Results.fn( VF(:,ii), J(:,:,ii) );
-          elseif parser.Results.useJacobian
-            Scalar_i(ii) = parser.Results.fn( J(:,:,ii) );
-          else
-            Scalar_i(ii) = parser.Results.fn( VF(:,ii) );
+          switch(componentString)
+            % [velocity, jacobian, position]
+            case '111'
+              Scalar_i(ii) = parser.Results.fn( VF(:,ii), J(:,:,ii), x(:,ii) );
+            case '110'
+              Scalar_i(ii) = parser.Results.fn( VF(:,ii), J(:,:,ii) );
+            case '101'
+              Scalar_i(ii) = parser.Results.fn( VF(:,ii), x(:,ii)  );
+            case '100'
+              Scalar_i(ii) = parser.Results.fn( VF(:,ii) );
+            case '011'
+              Scalar_i(ii) = parser.Results.fn( J(:,:,ii), x(:,ii) );
+            case '010'
+              Scalar_i(ii) = parser.Results.fn( J(:,:,ii) );
+            case '001'
+              Scalar_i(ii) = parser.Results.fn( x(:,ii) );
+            case '000'
+              error('You must select some variables to as inputs into the function');
           end
 
         end
         Scalar(:,:,k) = reshape(Scalar_i,size(X));
 
         %% plotting
-        if nargout <= 1
+        if ~params.noplot
           if k == 1
             % transpose b/c ndgrid was used
             if ~params.useImage
@@ -117,17 +134,25 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
             hb = colorbar;
             title(hb,params.name)
 
-            if params.useDivergentColor
-              AX = caxis;
-              md = max(abs(Scalar(:)));
-              md = min([md, 1e6]);
+            % select the color scheme
+            switch( lower(params.colorScheme) )
+              case 'divergent'
+                AX = caxis;
+                md = max(abs(Scalar(:)));
+                md = min([md, 1e6]);
 
-              M = autumn(256);
-              M = M(1:225,:);
-              D = flipud(summer(256));
-              D = D(31:256,:);
-              colormap( [M;D] );
-              caxis([-md, md]);
+                M = autumn(256);
+                M = M(1:225,:);
+                D = flipud(summer(256));
+                D = D(31:256,:);
+                colormap( [M;D] );
+                caxis([-md, md]);
+              case 'periodic'
+                M = parula(128);
+                D = flipud(parula(128));
+                colormap( [M;D] );
+              otherwise
+                ; %#ok
             end
 
           else
