@@ -3,6 +3,158 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 
   methods
 
+    function [varargout] = scalarplot( obj, t, varargin)
+    %SCALARPLOT Level sets of the scalar field computed based on velocity
+    %field, or jacobians, or both.
+    %
+    %
+    % SCALARPLOT(obj, t, fn)
+    %   Plots the values of the scalar function fn at time t on the default grid on
+    %   obj.Domain. Depending on the values of useVelocity and useJacobian
+    %   fn should either be fn(VF), fn(J), or fn(VF,J) function
+    % SCALARPLOT(obj, 'useVelocity',truefalse)
+    %   Use velocity instead of velocity field as input into scalar
+    %   function. (default: true)
+    % SCALARPLOT(obj, 'useJacobian',truefalse)
+    %   Use jacobian instead of velocity field as input into scalar
+    %   function. (default: false)
+    % SCALARPLOT(...,'R', R)
+    %   As above, uses R points per axis of the obj.Domain (default: R =
+    %   20).
+    % SCALARPLOT(...,'grid', {xi,yi} )
+    %   As above, uses a tensor grid xi XX yi to plot. xi and yi are
+    %   1D vectors.
+    % SCALARPLOT(...,'name', 'Scalar Function' )
+    %   Name of the scalar function (used to label color scale)
+    % SCALARPLOT(...,'useImage', truefalse )
+    %   Use image/imagesc format of plots. (default:true)
+    % SCALARPLOT(...,'plotf', handle )
+    %   Use 'plotf' instead of 'imagesc' as the plotting function (make
+    %   sure 'useImage' is set consistently.
+    % SCALARPLOT(...,'useDivergentColor', true )
+    %   Use symmetric and divergent color scheme.
+    %
+    % [X,Y,DIV] = SCALARPLOT(...)
+    %   Returns spatial points and values of the scalar function.
+    %   DIV is a matrix of size [rows(X), cols(X), numel(t)]
+    %
+
+      parser = inputParser;
+      parser.addRequired('t');
+      parser.addRequired('fn', @(v)isa(v,'function_handle') );
+      parser.addParameter('useVelocity',true,@islogical);
+      parser.addParameter('useJacobian',false,@islogical);
+      parser.addParameter('R',100, @(x)x>0);
+      parser.addParameter('grid',{}, @iscell);
+      parser.addParameter('name','Scalar Function',@(v)ischar(v) || ...
+                          iscell(v));
+      parser.addParameter('useImage',true,@islogical);
+      parser.addParameter('plotFn',@imagesc,@(v)isa(v,'function_handle'))
+      parser.addParameter('useDivergentColor',false,@islogical);
+
+      parser.parse(t, varargin{:});
+
+      params = parser.Results;
+      % compute grid based on input values
+
+      if isempty(params.grid)
+        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), params.R);
+        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), params.R);
+      else
+        xi = params.grid{1};
+        yi = params.grid{2};
+        validateattributes( xi, {'numeric'},{'vector','real'});
+        validateattributes( yi, {'numeric'},{'vector','real'});
+      end
+
+      [X,Y] = ndgrid(xi, yi);
+
+      x = [X(:),Y(:)].';
+
+      Scalar = nan( [size(X), numel(t)] ); % jacobian scalars
+      Scalar_i = nan( [size(X), 1] ); % unsorted jacobian scalars
+
+      for k = 1:numel(t)
+        if parser.Results.useJacobian
+          J = obj.jacobian(t(k),x);
+        end
+        if parser.Results.useVelocity
+          VF = obj.vf(t(k),x);
+        end
+
+        for ii = 1:size(x,2)
+          % use both
+          if parser.Results.useJacobian && parser.Results.useVelocity
+            Scalar_i(ii) = parser.Results.fn( VF(:,ii), J(:,:,ii) );
+          elseif parser.Results.useJacobian
+            Scalar_i(ii) = parser.Results.fn( J(:,:,ii) );
+          else
+            Scalar_i(ii) = parser.Results.fn( VF(:,ii) );
+          end
+
+        end
+        Scalar(:,:,k) = reshape(Scalar_i,size(X));
+
+        %% plotting
+        if nargout <= 1
+          if k == 1
+            % transpose b/c ndgrid was used
+            if ~params.useImage
+              h = params.plotFn(xi,...
+                         yi, ...
+                         Scalar(:,:,1)');
+              shading flat;
+            else
+              h = params.plotFn('XData',xi,...
+                                'YData',yi, ...
+                                'CData',Scalar(:,:,1)');
+            end
+
+
+            xlim([min(xi),max(xi)]);
+            ylim([min(yi),max(yi)]);
+
+            hb = colorbar;
+            title(hb,params.name)
+
+            if params.useDivergentColor
+              AX = caxis;
+              md = max(abs(Scalar(:)));
+              md = min([md, 1e6]);
+
+              M = autumn(256);
+              M = M(1:225,:);
+              D = flipud(summer(256));
+              D = D(31:256,:);
+              colormap( [M;D] );
+              caxis([-md, md]);
+            end
+
+          else
+            h.Visible ='off';
+            if params.useImage
+              h.CData = Scalar(:,:,k)';
+            else
+              h.ZData = Scalar(:,:,k)';
+            end
+
+            h.Visible = 'on';
+
+          end
+          title(sprintf('t = %.2f',t(k)));
+          pause(1/15);
+        end
+
+      end
+
+      if nargout == 1
+        varargout = h;
+      elseif nargout > 1
+        varargout = {X,Y,Scalar};
+      end
+    end
+
+
     function [varargout] = jacobianplot( obj, t, varargin)
     %JACOBIANPLOT Level sets of the scalar function of
     %the velocity field jacobian.
@@ -14,6 +166,8 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     % JACOBIANPLOT(...,'R', R)
     %   As above, uses R points per axis of the obj.Domain (default: R =
     %   20).
+    % JACOBIANPLOT(...,'name', 'Scalar Function'N )
+    %   Name of the scalar function (used to label color scale)
     % JACOBIANPLOT(...,'grid', {xi,yi} )
     %   As above, uses a tensor grid xi XX yi to plot. xi and yi are
     %   1D vectors.
