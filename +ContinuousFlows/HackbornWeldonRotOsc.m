@@ -186,7 +186,7 @@ classdef HackbornWeldonRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     x(1,:,:) = x(1,:,:) - obj.epsilon*sin( obj.lambda * t );
 
     % swap X and Y variables to have the domain horizontal
-    out = flipud(obj.Phi(x,order) + obj.Gamma(x,order));
+    out = -flipud(obj.Phi(x,order) + obj.Gamma(x,order));
 
     end
 
