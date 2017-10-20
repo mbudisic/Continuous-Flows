@@ -3,6 +3,90 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 
   methods
 
+    function [varargout] = streamline( obj, t, varargin)
+    %STREAMLINE Level sets of the stream function of the flow.
+    %
+    % STREAMLINE(obj, t)
+    %   Plots the streamlines of the interpolated flow starting from a
+    %   random subset of gridpoints. If t has multiple elements, video is produced.
+    % STREAMLINE(obj,t, PARAMETER,VALUE )
+    %   Additionally modify the behavior using named parameters. Default
+    %   value in parenthesis
+    %   'R' -- number of points in vertical/horizontal grid (100)
+    %   'xi' -- manually set x grid; ignore if empty ([])
+    %   'yi' -- manually set y grid; ignore if empty ([])
+    %   'nlines' -- number of streamlines to compute (30)
+    %   'stepsize' -- stepsize for streamline calcluation (see built-in
+    %   STREAMLINE)
+    %   'npoints' -- number of points in each streamline (see built-in STREAMLINE)
+    %
+    % [h] = STREAMLINE(...)
+    %   As above, returns graphics handle.
+    % [X,Y,U,V] = STREAMLINE(...)
+    %   Returns spatial points and values of the velocity field.
+    %   U,V are matrices of size [rows(X), cols(X), numel(t)]
+    %
+    % See also: STREAMLINE
+
+      parser = inputParser;
+
+      %% Process optional parameters
+      parser.addParameter('R',100); % resolution of the grid
+      parser.addParameter('xi', [] ); % xgrid that should be used
+      parser.addParameter('yi', [] ); % ygrid that should be used
+      parser.addParameter('nlines',30, @(n)(n>0));
+      parser.addParameter('stepsize',0.1, @(x)(x>0 && x<1));
+      parser.addParameter('npoints',200, @(n)(n>0));
+
+      parser.parse(varargin{:});
+
+      R = ceil(parser.Results.R);
+      if isempty(parser.Results.xi)
+        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
+      else
+        xi = parser.Results.xi;
+      end
+      if isempty(parser.Results.yi)
+        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+      else
+        yi = parser.Results.yi;
+      end
+
+      %% Compute 2D grid of velocities
+
+      [X,Y] = meshgrid(xi, yi);
+      x = [X(:),Y(:)].';
+      U = nan( [size(X), numel(t)] );
+      V = nan( [size(X), numel(t)] );
+      for k = 1:numel(t)
+        VF_i = obj.vf(t(k),x);
+        U(:,:,k) = reshape(VF_i(1,:), size(X));
+        V(:,:,k) = reshape(VF_i(2,:), size(X));
+      end
+
+      %% Use built-in streamline to construct streamlines
+
+      if nargout > 1
+        varargout = {X,Y,U, V};
+      else
+        sel = unique(randi(numel(X),ceil(parser.Results.nlines)));
+        for k = 1:numel(t)
+          cla;
+          h = streamline(X,Y,...
+                         U(:,:,k), V(:,:,k),...
+                         X(sel), Y(sel), ...
+                         [parser.Results.stepsize,...
+                          ceil(parser.Results.npoints)]);
+          title(sprintf('t = %.2f',t(k)));
+          pause(1/15);
+        end
+        if nargout > 0
+          varargout = {h};
+        end
+      end
+    end
+
+
     function [varargout] = scalarplot( obj, t, varargin)
     %SCALARPLOT Level sets of the scalar field computed based on velocity
     %field, or jacobians, or both.
