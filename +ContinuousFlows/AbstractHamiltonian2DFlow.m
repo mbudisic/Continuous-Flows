@@ -43,7 +43,7 @@ classdef (Abstract) AbstractHamiltonian2DFlow < ContinuousFlows.AbstractODEFlow2
 
     % system is Hamiltonian (has a stream function)
       f = flipud(obj.Psi(t,x,1)); % exchange rows
-      f(1,:) = -f(1,:);
+      f(2,:) = -f(2,:);
     end
 
     function [J] = jacobian( obj, t, x )
@@ -65,10 +65,10 @@ classdef (Abstract) AbstractHamiltonian2DFlow < ContinuousFlows.AbstractODEFlow2
 
       J = zeros(2,2,Nx);
 
-      J(1,1,:) = -Jv(2,:);
-      J(2,2,:) =  Jv(2,:);
-      J(1,2,:) = -Jv(3,:);
-      J(2,1,:) =  Jv(1,:);
+      J(1,1,:) = Jv(2,:);
+      J(2,2,:) = -Jv(2,:);
+      J(1,2,:) = Jv(3,:);
+      J(2,1,:) = -Jv(1,:);
 
     end
 
