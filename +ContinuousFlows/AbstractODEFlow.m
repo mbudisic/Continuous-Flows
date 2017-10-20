@@ -55,7 +55,7 @@ classdef (Abstract) AbstractODEFlow < ContinuousFlows.AbstractContinuousFlow
 
         fiD = ( fi( :, 1:Dim) - fi( :, (1:Dim)+Dim) )/(2*delta);
 
-        J(:,:,idx) = fiD.';
+        J(:,:,idx) = fiD; % this had transpose before - verify
       end
 
     end
