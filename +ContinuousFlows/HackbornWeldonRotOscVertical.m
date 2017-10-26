@@ -1,11 +1,11 @@
-classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
-%HACKBORNROTOSC Hackborn Rotor-Oscillator flow -- Hackborn et al., JFM, (1997)
+classdef HackbornWeldonRotOscVertical < ContinuousFlows.AbstractHamiltonian2DFlow
+%HACKBORNROTOSCFROZEN Hackborn Rotor-Oscillator flow -- Hackborn et al., JFM, (1997)
 %
 % The flow evolves in the channel [-1,1] x [-inf, inf] although
 % practically [-1,1] x [-4, 4] is enough for common parameters
 %
 % Stream function $\Psi(x,y,t)$ is given by three components:
-% $$ \Psi(x,y,t) = \Phi(x,y) + \Gamma(x,y) + \epsilon \Lambda(t,x) $$
+% $$ \Psi(x,y,t) = \Phi(x,y) + \Gamma(x,y) + \epsilon * \lambda * \Lambda(t,x) $$
 %
 % Free rotlet:
 % $$ \Phi(x,y) = (1/2) \log \frac{\cosh(\pi y/2) - \cos[\pi(x-c)/2]}{\cosh(\pi
@@ -23,15 +23,22 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 % $$\Lambda(t,x) = (A*x + B*x^2/2) \cos(\lambda t)
 % sets up a background linear shear profile, that oscillates in magnitude.
 %
-% In Hackborn 1997, A = 1, B=1 (still wall at x=-1, full magnitude at x=1)
+% In Hackborn 1997, A = 1/lambda, B=1/lambda (still wall at x=-1, full magnitude at x=1)
 % In Weldon 2008, A = 1, B=0 (uniform background flow)
 %
-% In summary, there are three non-dimensional parameters that are
-% available:
+% When B = 0, the coordinate transformation
+% x -> x, y -> y - K sin(\lambda t)
+% transforms to a comoving frame of the rotor. Constant
+% K = A*epsilon
+% can be evaluated as Kcom.
+%
+% In summary, the non-dimensional parameters that are
+% available are:
 %
 % epsilon (amplitude of periodic perturbation)
 % lambda  (frequency of periodic perturbation)
 % c       (the x in [-1,1] coordinate of the rotor)
+% tau     (period of periodic perturbation -- 2pi/lambda)
 %
 % Hackborn (1997) lists how these parameters correspond to physical
 % parameters:
@@ -59,12 +66,13 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 
     c       % rotor location (between -1 and 1)
 
-    a       % a+bx is the profile of the oscillating velocity flow
-    b       %
+    A       % A+Bx is the profile of the oscillating velocity flow
+    B       % A+Bx is the profile of the oscillating velocity flow
   end
 
   properties (Dependent = true, SetAccess = private)
-      wallPeriod % compute/set period of the wall oscillation
+    tau    % compute/set period of the wall oscillation
+    Kcom   % comoving constant
   end
 
 
@@ -78,18 +86,29 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
 
   methods
 
-    function out = get.wallPeriod(obj)
+    function K = get.Kcom(obj)
+    % COMOVING CONSTANT
+
+      if (obj.B ~= 0 )
+        warning('Comoving frame is not valid as B is not zero.')
+      end
+
+      K = obj.A*obj.epsilon;
+
+    end
+
+    function out = get.tau(obj)
       out = 2*pi/obj.lambda;
     end
 
-    function lambda = set.wallPeriod(obj, p)
+    function lambda = set.tau(obj, p)
       lambda = 2*pi/p;
       obj.lambda = lambda;
     end
 
-    function obj = HackbornRotOsc( dt, flowp )
+    function obj = HackbornWeldonRotOscVertical( dt, flowp )
     %HACKBORNROTOSC Construct a Hackborn Rotor-Oscillator flow
-    % HackbornRotOsc( dt, params )
+    % HackbornWeldonRotOscVertical( dt, params )
     %
     % dt    time discretization step
     % flowp
@@ -99,14 +118,14 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     %                  c       -- rotor location (between -1 and 1)
     %                  a,b     -- linear background cross-channel velocity
     %                             profile ( a + b x )
-    %     -- 'regular'      - parameter set [0.04, 2.463, 0.54, 1, 1]
-    %     -- 'structured'   - parameter set [0.02, 1.232, 0.54, 1, 1]
-    %     -- 'mixing'       - parameter set [0.02, 0.406, 0.54, 1, 1]
+    %     -- 'regular'      - parameter set [0.04, 2.463, 0.54, 1/lambda, 1/lambda]
+    %     -- 'structured'   - parameter set [0.02, 1.232, 0.54, 1/lambda, 1/lambda]
+    %     -- 'mixing'       - parameter set [0.02, 0.406, 0.54, 1/lambda, 1/lambda]
     %     -- 'margaux'      - [0.125, 0.4*pi, 0.54, 1, 0]
     %
 
       if nargin < 2
-        help ContinuousFlows.HackbornRotOsc.HackbornRotOsc
+        help ContinuousFlows.HackbornWeldonRotOscVertical.HackbornWeldonRotOscVertical
       end
 
       obj.Domain = [-1,1; -2,2];
@@ -115,11 +134,11 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       if ischar( flowp )
         switch flowp
           case 'regular'
-            flowp = [0.04, 2.463, 0.54, 1, 1];
+            flowp = [0.04, 2.463, 0.54, 1/2.463, 1/2.463];
           case 'structured'
-            flowp = [0.02, 1.232, 0.54, 1, 1];
+            flowp = [0.02, 1.232, 0.54, 1/1.232, 1/1.232];
           case 'mixing'
-            flowp = [0.1, 0.406, 0.54,1, 1];
+            flowp = [0.1, 0.406, 0.54, 1/0.406, 1/0.406];
           case 'margaux'
             flowp = [0.125, 0.4*pi, 0.54, 1, 0];
           otherwise
@@ -128,7 +147,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       end
 
       flowp = num2cell(flowp);
-      [obj.epsilon, obj.lambda, obj.c, obj.a, obj.b] = deal(flowp{:});
+      [obj.epsilon, obj.lambda, obj.c, obj.A, obj.B] = deal(flowp{:});
 
       %% Gauss-Legendre points and weights
       % on the k = [0,50] interval
@@ -146,7 +165,7 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
       obj.intprops = odeset(obj.intprops, 'Jacobian', @obj.jacobian);
-      obj.intprops = odeset(obj.intprops, 'MaxStep', (5e-2)*2*pi/obj.lambda);
+      obj.intprops = odeset(obj.intprops, 'MaxStep', obj.tau*5/100);
       %obj.intprops = odeset(obj.intprops, 'Stats','on' );
 
     end
@@ -158,9 +177,10 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
     %  second derivatives are sorted as
     %  [xx; xy; yy]
 
-        out = obj.Phi(x,order) + ...
-              obj.Gamma(x,order) + ...
-              obj.epsilon * obj.Lambda(t,x,order);
+    x(2,:,:) = x(2,:,:) - obj.epsilon*sin( obj.lambda * t );
+
+      out = obj.Phi(x,order) + ...
+            obj.Gamma(x,order);
 
     end
 
@@ -314,15 +334,15 @@ classdef HackbornRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       Nx = size(x,2);
       COS = cos(obj.lambda*t);
       if order == 0
-        out = ( obj.a*x(1,:) + obj.b*x(1,:).^2 / 2 ) .* COS;
+        out = ( obj.A*x(1,:) + obj.B*x(1,:).^2 / 2 ) .* COS;
       elseif order == 1
-        out = [( obj.a + obj.b*x(1,:) ) .* COS;
+        out = [( obj.A + obj.B*x(1,:) ) .* COS;
                zeros(1,Nx) ];
       else % order == 2
         if numel(COS) == 1
           COS = repmat(COS, [1,Nx]);
         end
-        out = [obj.b*COS; zeros(2,Nx)];
+        out = [obj.B*COS; zeros(2,Nx)];
       end
     end
 
@@ -345,51 +365,51 @@ function [x,w]=legendreweights(N,a,b)
 % the definite integral using sum(f.*w);
 %
 % Written by Greg von Winckel (named: lgwt) - 02/25/2004
-N=N-1;
-N1=N+1; N2=N+2;
+  N=N-1;
+  N1=N+1; N2=N+2;
 
-xu=linspace(-1,1,N1)';
+  xu=linspace(-1,1,N1)';
 
-% Initial guess
-y=cos((2*(0:N)'+1)*pi/(2*N+2))+(0.27/N1)*sin(pi*xu*N/N2);
+  % Initial guess
+  y=cos((2*(0:N)'+1)*pi/(2*N+2))+(0.27/N1)*sin(pi*xu*N/N2);
 
-% Legendre-Gauss Vandermonde Matrix
-L=zeros(N1,N2);
+  % Legendre-Gauss Vandermonde Matrix
+  L=zeros(N1,N2);
 
-% Derivative of LGVM
-Lp=zeros(N1,N2);
+  % Derivative of LGVM
+  Lp=zeros(N1,N2);
 
-% Compute the zeros of the N+1 Legendre Polynomial
-% using the recursion relation and the Newton-Raphson method
+  % Compute the zeros of the N+1 Legendre Polynomial
+  % using the recursion relation and the Newton-Raphson method
 
-y0=2;
+  y0=2;
 
-% Iterate until new points are uniformly within epsilon of old points
-while max(abs(y-y0))>eps
+  % Iterate until new points are uniformly within epsilon of old points
+  while max(abs(y-y0))>eps
 
 
-  L(:,1)=1;
-  Lp(:,1)=0;
+    L(:,1)=1;
+    Lp(:,1)=0;
 
-  L(:,2)=y;
-  Lp(:,2)=1;
+    L(:,2)=y;
+    Lp(:,2)=1;
 
-  for k=2:N1
-    L(:,k+1)=( (2*k-1)*y.*L(:,k)-(k-1)*L(:,k-1) )/k;
+    for k=2:N1
+      L(:,k+1)=( (2*k-1)*y.*L(:,k)-(k-1)*L(:,k-1) )/k;
+    end
+
+    Lp=(N2)*( L(:,N1)-y.*L(:,N2) )./(1-y.^2);
+
+    y0=y;
+    y=y0-L(:,N2)./Lp;
+
   end
 
-  Lp=(N2)*( L(:,N1)-y.*L(:,N2) )./(1-y.^2);
+  % Linear map from[-1,1] to [a,b]
+  x=(a*(1-y)+b*(1+y))/2;
+  x = x(:); % column vector
 
-  y0=y;
-  y=y0-L(:,N2)./Lp;
-
-end
-
-% Linear map from[-1,1] to [a,b]
-x=(a*(1-y)+b*(1+y))/2;
-x = x(:); % column vector
-
-% Compute the weights -- row vector
-w=(b-a)./((1-y.^2).*Lp.^2)*(N2/N1)^2;
-w=w(:).';
+  % Compute the weights -- row vector
+  w=(b-a)./((1-y.^2).*Lp.^2)*(N2/N1)^2;
+  w=w(:).';
 end

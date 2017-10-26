@@ -53,10 +53,10 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
       %                   documentation for description of options (default:
       %                   'nearest')
       %
-      % 'test'          - plot the first slice of the quiver plot (with a 
-      %                   small grid offset) to visually compare input data  
-      %                   and interpolated data. 
-      %                   Passed value is the percentage of the grid step 
+      % 'test'          - plot the first slice of the quiver plot (with a
+      %                   small grid offset) to visually compare input data
+      %                   and interpolated data.
+      %                   Passed value is the percentage of the grid step
       %                   which is used to offset data
       %                   (default: 0)
       %
@@ -66,16 +66,16 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
 
       obj.dt = dt;
       validateattributes( UxGrid, {'numeric'}, {}, ...
-          'InterpolatedODEFlow2D', 'UxGrid', 3 );
+                          'InterpolatedODEFlow2D', 'UxGrid', 3 );
       D = numel(size(UxGrid));
 
       validateattributes( axesNodes, {'cell'}, {'numel',D},...
-          'InterpolatedODEFlow2D', 'axesNodes', 2 );
-        
-      
+                          'InterpolatedODEFlow2D', 'axesNodes', 2 );
+
+
       validateattributes( UyGrid, {'numeric'}, {'ndims',D},...
-          'InterpolatedODEFlow2D', 'UyGrid', 4 );
-      
+                          'InterpolatedODEFlow2D', 'UyGrid', 4 );
+
       assert( all(size(UxGrid) == size(UyGrid)),...
               'Velocity components have to be of the same size' );
 
@@ -86,7 +86,7 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
       parsearg.addParameter('interpolation','linear',@ischar);
       parsearg.addParameter('extrapolation','nearest',@ischar);
       parsearg.addParameter('test',0,@(x)(x >= 0));
-      
+
       parsearg.parse(varargin{:});
       params = parsearg.Results;
 
@@ -102,23 +102,23 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
         obj.Domain(d,1) = min(axesNodes{d});
         obj.Domain(d,2) = max(axesNodes{d});
       end
-      
+
       gridCols = size(UxGrid,2);
       gridRows = size(UxGrid,1);
-      
+
       sizeX = numel(axesNodes{1});
       sizeY = numel(axesNodes{2});
       sizeT = numel(axesNodes{3});
-      
+
       assert( sizeX == gridRows, 'X-coordinate should correspond to rows' );
       assert( sizeY == gridCols, 'Y-coordinate should correspond to columns' );
       assert( all(size(UxGrid) == size(UyGrid)),...
-          'Dimensions of velocity matrices should match');
-      
+              'Dimensions of velocity matrices should match');
+
       if ~obj.isAutonomous
         assert( numel(axesNodes{3}) == size(UxGrid,3) );
       end
-      
+
       % interpolate the velocity field
       obj.Ux = griddedInterpolant(axesNodes, ...
                                   UxGrid,...
@@ -135,34 +135,34 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
       %      obj.intprops = odeset(obj.intprops, 'Jacobian', @(t,x)obj.jacobian(t,x) );
       %      obj.intprops = odeset(obj.intprops, 'Stats','on' );
-      
+
       if params.test > 0
-          params.test = params.test/100;
-          x = axesNodes{1};
-          y = axesNodes{2};
-          t = axesNodes{3};
-          t0 = t(1);
-          ts = t0+params.test*diff(t(1:2));
-          
-          
-          [X,Y] = ndgrid(x,y);
-          
-          quiver(X,Y,UxGrid(:,:,1),UyGrid(:,:,1),'Color','r'); 
-          hold all; 
-          
-          h = obj.quiverplot(ts, 'grid', ...
-              {x+params.test*diff(x(1:2));...
-              y+params.test*diff(y(1:2));}); 
-          h.Color = 'b'; 
-          hold off;
-          
-          xlabel( sprintf('X - Range [%f,%f]', min(x), max(x) ) );
-          ylabel( sprintf('Y - Range [%f,%f]', min(y), max(y) ) );
-          title({sprintf('Input data (red) at t=%f',t0),...
-              sprintf('Interpolated data (blue) at t = %f',ts)});
-          
+        params.test = params.test/100;
+        x = axesNodes{1};
+        y = axesNodes{2};
+        t = axesNodes{3};
+        t0 = t(1);
+        ts = t0+params.test*diff(t(1:2));
+
+
+        [X,Y] = ndgrid(x,y);
+
+        quiver(X,Y,UxGrid(:,:,1),UyGrid(:,:,1),'Color','r');
+        hold all;
+
+        h = obj.quiverplot(ts, 'grid', ...
+                           {x+params.test*diff(x(1:2));...
+                            y+params.test*diff(y(1:2));});
+        h.Color = 'b';
+        hold off;
+
+        xlabel( sprintf('X - Range [%f,%f]', min(x), max(x) ) );
+        ylabel( sprintf('Y - Range [%f,%f]', min(y), max(y) ) );
+        title({sprintf('Input data (red) at t=%f',t0),...
+               sprintf('Interpolated data (blue) at t = %f',ts)});
+
       end
-      
+
 
     end
 

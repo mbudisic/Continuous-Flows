@@ -23,11 +23,11 @@ classdef LorenzExtended < ContinuousFlows.AbstractODEFlow
     % Params can be:
     %
     % -- 1 x 5 vector of coefficients [S,R,B,D,A]
-    % -- 'lorenz' - butterfly attractor [10, 28, 8/3, 0, 0]
-    % -- 'pikovskyA'- singular-continuous spectrum (Pikovsky, 1994) --
-    % symmetric
-    % -- 'pikovskyB'- singular-continuous spectrum (Pikovsky, 1994) --
-    % asymmetric
+    % -- 'lorenz' - butterfly attractor [10, 28, 8/3, 0, 0] [mixing,
+    % Luzzato 2005]
+    % -- 'pikovskyA'- singular-continuous spectrum (Pikovsky, 1994)
+    % -- 'pikovskyB'- singular-continuous spectrum (Pikovsky, 1994)
+
     %
     % where:
     % S      % Prandtl number (Lorenz)
@@ -58,11 +58,13 @@ classdef LorenzExtended < ContinuousFlows.AbstractODEFlow
       [obj.S, obj.R, obj.B, obj.D, obj.A] = deal(params{:});
 
       %% Set up integration parameters
-      obj.integrator = @ode45;
+      obj.integrator = @ode113;
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
-      obj.intprops = odeset(obj.intprops, 'MaxStep', 5*obj.dt);
+      %obj.intprops = odeset(obj.intprops, 'MaxStep', 0.05);
       obj.intprops = odeset(obj.intprops, 'Jacobian', @(t,x)obj.jacobian(t,x) );
+      obj.intprops.AbsTol = 1e-14;
+      obj.intprops.RelTol = 1e-12;
       % obj.intprops = odeset(obj.intprops, 'Stats','on' );
 
     end
