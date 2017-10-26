@@ -9,6 +9,12 @@ classdef CherryFlow < ContinuousFlows.AbstractODEFlow2D
 %
 % b is the rotation number when the flow is Hamiltonian (K=1), and
 % K the orientation of the flow (e.g., differentiating between source and sink)
+%
+% Parameter sets in constructor available:
+% 'hamiltonian'
+% 'sourcefractal'
+% 'sinkfractal'
+%
 
   properties
     % parameters for the flow
@@ -20,7 +26,17 @@ classdef CherryFlow < ContinuousFlows.AbstractODEFlow2D
 
     function obj = CherryFlow( dt, varargin )
     %CherryFlow Construct the cherry flow
-    % CherryFlow( dt, params )
+    %
+    % CherryFlow( dt, 'b', B, 'k', K )
+    %
+    % Construct Cherry flow with parameters
+    % b (rotation number at K=1),
+    % K (energy conservation parameter:
+    %   -- K < 1 sink
+    %   -- K = 1 center
+    %   -- K > 1 source
+    %
+    % CherryFlow( dt, 'parset', PARAMETERSETNAME )
     % Params is:
     %
     % -- coefficient mu
