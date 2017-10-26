@@ -9,6 +9,7 @@ classdef (Abstract) AbstractContinuousFlow
     dt % trajectory discretization step
     Domain % suggested (square) domain Ndim x 2
     quiet = true % suppress output if true
+    label = 'FLOWNAME' % arbitrary label to distinguish the flow
   end
 
   methods (Abstract)
