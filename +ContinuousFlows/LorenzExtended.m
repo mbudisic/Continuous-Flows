@@ -49,6 +49,8 @@ classdef LorenzExtended < ContinuousFlows.AbstractODEFlow
             params = [10, 15.8237366, 8/3, 0.0526349, 0];
           case 'pikovskyB'
             params = [10, 14.1487968, 8/3, 0.05433476, -0.56112733];
+          case 'periodic'
+            params = [10, 99.65, 8/3, 0, 0];
           otherwise
             error('Unknown parameter set');
         end
