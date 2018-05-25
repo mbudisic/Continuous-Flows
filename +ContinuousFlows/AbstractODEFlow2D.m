@@ -31,10 +31,10 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       parser = inputParser;
 
       %% Process optional parameters
-      parser.addParameter('R',100); % resolution of the grid
+      parser.addParameter('R',100); % resolution of the grid at which velocity field is defined
       parser.addParameter('xi', [] ); % xgrid that should be used
       parser.addParameter('yi', [] ); % ygrid that should be used
-      parser.addParameter('nlines',30, @(n)(n>0));
+      parser.addParameter('nlines',400, @(n)(n>0));
       parser.addParameter('stepsize',0.1, @(x)(x>0 && x<1));
       parser.addParameter('npoints',200, @(n)(n>0));
 
@@ -55,7 +55,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       %% Compute 2D grid of velocities
 
       [X,Y] = meshgrid(xi, yi);
-      x = [X(:),Y(:)].';
+      x = [X(:),Y(:)].'; 
       U = nan( [size(X), numel(t)] );
       V = nan( [size(X), numel(t)] );
       for k = 1:numel(t)
@@ -65,11 +65,10 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       end
 
       %% Use built-in streamline to construct streamlines
-
       if nargout > 1
         varargout = {X,Y,U, V};
       else
-        sel = unique(randi(numel(X),ceil(parser.Results.nlines)));
+        sel = unique(randi(numel(X),[ceil(parser.Results.nlines),1]));
         for k = 1:numel(t)
           if k > 1; cla; end;
           h = streamline(X,Y,...
