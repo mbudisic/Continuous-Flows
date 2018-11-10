@@ -2,6 +2,132 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 %ABSTRACTODEFLOW2D Abstract methods for 2D plots of velocity field.
 
   methods
+      
+    function [varargout] = ftlepw( obj, varargin )
+        
+      parser = inputParser;
+
+      %% Process optional parameters
+      parser.addRequired('tau');
+      parser.addParameter('h', 1e-6); % resolution of the grid at which velocity field is defined
+      parser.addParameter('t0', 0 ); % initial time
+      parser.parse(varargin{:});
+        
+        
+      p = obj.flow(p0, tau, parser.Results.t0 );
+
+        
+    end
+    
+    function [varargout] = ftle( obj, varargin )
+    %FTLE Compute FTLE field with tau integration time.
+
+    %%
+    % Initialize
+
+      parser = inputParser;
+
+      %% Process optional parameters
+      parser.addRequired('tau');
+      parser.addParameter('R', 5); % resolution of the grid at which velocity field is defined
+      parser.addParameter('xi', [] ); % xgrid that should be used
+      parser.addParameter('yi', [] ); % ygrid that should be used
+      parser.addParameter('stepsize',0.1, @(x)(x>0 && x<1));
+      parser.addParameter('t0', 0 ); % initial time
+      parser.addParameter('threshold',0.1);
+      parser.parse(varargin{:});
+
+      tau = parser.Results.tau;
+      %
+      %% generate initial conditions
+      R = ceil(parser.Results.R);
+      if isempty(parser.Results.xi)
+        xi = linspace(obj.Domain(1,1), obj.Domain(1,2), R);
+      else
+        xi = parser.Results.xi;
+      end
+      if isempty(parser.Results.yi)
+        yi = linspace(obj.Domain(2,1), obj.Domain(2,2), R);
+      else
+        yi = parser.Results.yi;
+      end
+
+      %% Compute 2D grid of velocities
+
+      [X,Y] = ndgrid(xi, yi);
+      p0 = [X(:),Y(:)].';
+
+      %%
+      % Simulate initial conditions for time tau
+      p = obj.flow(p0, tau, parser.Results.t0 );
+    
+      %% Create continuous interpolants
+      Xt = reshape(p(1,:)', size(X));
+      Yt = reshape(p(2,:)', size(X));
+      
+      
+      Xi = griddedInterpolant(X,Y,Xt, 'linear');
+      Yi = griddedInterpolant(X,Y,Yt, 'linear');
+      
+      %% Numerically differentiate the interpolants
+      cdiff = @(f, hx, hy) @(x,y)[ ...
+          (f( x+hx,y ) - f(x-hx,y))/2/hx, ...
+          (f( x,y+hy ) - f(x,y-hy))/2/hy ];
+      
+      hx = 1e-3;
+      hy = 1e-3;
+      
+      dX = cdiff( Xi, hx, hy );
+      dY = cdiff( Yi, hx, hy );
+      
+      %% Compute jacobians and their SVDs at every point
+      FTLEmax = nan( size(X) );
+      FTLEmin = nan( size(X) );
+      
+      
+      
+      for k = 1:numel(X)
+         
+          J = [ dX( X(k), Y(k));...
+                dY( X(k), Y(k)) ];
+          Sigma = sort(svd(J),'descend');          
+          
+          %%%
+          % FTLE FORMULA
+          FTLE = log(Sigma)/abs(tau);
+          FTLEmax(k) = FTLE(1); 
+          FTLEmin(k) = FTLE(2);
+          
+      end
+      
+      %% Plotting
+            h = imagesc('XData',xi,...
+                        'YData',yi, ...
+                        'CData',FTLEmax');
+      c = colorcube;
+      if tau > 0
+          c = c(39:44,:);
+      else
+          c = c( (39:44)+12,:);
+      end
+      colormap(c);
+      xlim([min(xi),max(xi)]);
+      ylim([min(yi),max(yi)]);
+      
+      hb = colorbar;
+      
+      %% Return outputs
+      if nargout == 1
+          varargout = h;
+      elseif nargout > 1
+          varargout = {FTLEmax, FTLEmin, X, Y};
+      else
+          varargout = {};
+      end
+
+
+
+    end
 
     function [varargout] = streamline( obj, t, varargin)
     %STREAMLINE Level sets of the stream function of the flow.
@@ -55,7 +181,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       %% Compute 2D grid of velocities
 
       [X,Y] = meshgrid(xi, yi);
-      x = [X(:),Y(:)].'; 
+      x = [X(:),Y(:)].';
       U = nan( [size(X), numel(t)] );
       V = nan( [size(X), numel(t)] );
       for k = 1:numel(t)
@@ -203,8 +329,8 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
             % transpose b/c ndgrid was used
             if ~params.useImage
               h = params.plotFn(xi,...
-                         yi, ...
-                         Scalar(:,:,1)');
+                                yi, ...
+                                Scalar(:,:,1)');
               shading flat;
             else
               h = params.plotFn('XData',xi,...

@@ -8,6 +8,49 @@ classdef (Abstract) AbstractODEFlow < ContinuousFlows.AbstractContinuousFlow
   end
 
   methods
+      
+    function [J] = flow_jacobian( obj, x, tau, t0, delta)
+    % FLOW_JACOBIAN Compute Jacobian of the flow map.
+    % [ J ] = flow_jacobian( obj, p0, tau, t0, delta )
+    %
+    % t   - row-vector of times
+    % x   - trajectory
+    %     - columns correspond to time steps
+    %     - rows correspond to states
+    % Returns:
+    % J   - Jacobians
+    %     - each J(:,:,i) is a dim x dim Jacobian matrix
+    %     - of the velocity field at [ t(i), x(i,:) ] point
+    %
+    % [ J ] = jacobian( ..., delta )
+    %
+    % Use delta as the central difference step. If omitted, delta=1e-6.
+
+      delta = 1e-6;
+
+      Nx = size(x,2);
+      Dim = size(x,1);
+
+      J = nan(Dim,Dim,Nx);
+
+      % for each point
+      for idx = 1:Nx
+
+        xx = x(:,idx);
+
+        %% central difference
+        stencil = eye(Dim)*delta;
+        xi = [bsxfun(@plus, xx, stencil), ...
+              bsxfun(@minus, xx, stencil) ];
+
+        fi = obj.flow(xi, tau, t0);
+
+        fiD = ( fi( :, 1:Dim) - fi( :, (1:Dim)+Dim) )/(2*delta);
+
+        J(:,:,idx) = fiD; % this had transpose before - verify
+      end
+
+    end      
 
     function [J] = jacobian( obj, t, x, delta)
     % JACOBIAN Compute Jacobian of the velocity field along
@@ -94,7 +137,7 @@ classdef (Abstract) AbstractODEFlow < ContinuousFlows.AbstractContinuousFlow
       % initialize output structures
       M = size(x0, 1);
       N = size(x0, 2);
-      t = ( t0:obj.dt:(t0+T) );
+      t = ( t0:(obj.dt*sign(T)):(t0+T) );
       L = numel(t);
       x = nan( M, L, N );
       xf = nan( M, N ); % final point
