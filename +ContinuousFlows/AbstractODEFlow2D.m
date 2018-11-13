@@ -65,20 +65,9 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       Xt = reshape(p(1,:)', size(X));
       Yt = reshape(p(2,:)', size(X));
       
+      [dXtdX, dXtdY] = gradient(Xt);
+      [dYtdX, dYtdY] = gradient(Yt);
       
-      Xi = griddedInterpolant(X,Y,Xt, 'linear');
-      Yi = griddedInterpolant(X,Y,Yt, 'linear');
-      
-      %% Numerically differentiate the interpolants
-      cdiff = @(f, hx, hy) @(x,y)[ ...
-          (f( x+hx,y ) - f(x-hx,y))/2/hx, ...
-          (f( x,y+hy ) - f(x,y-hy))/2/hy ];
-      
-      hx = 1e-3;
-      hy = 1e-3;
-      
-      dX = cdiff( Xi, hx, hy );
-      dY = cdiff( Yi, hx, hy );
       
       %% Compute jacobians and their SVDs at every point
       FTLEmax = nan( size(X) );
@@ -88,15 +77,14 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       
       for k = 1:numel(X)
          
-          J = [ dX( X(k), Y(k));...
-                dY( X(k), Y(k)) ];
-          Sigma = sort(svd(J),'descend');          
+          J = [dXtdX(k), dXtdY(k);...
+               dYtdX(k), dYtdY(k)];
+          Sigma = sqrt( max(eig(J'*J)) );
           
           %%%
           % FTLE FORMULA
-          FTLE = log(Sigma)/abs(tau);
-          FTLEmax(k) = FTLE(1); 
-          FTLEmin(k) = FTLE(2);
+          FTLEmax(k) = log(max(Sigma))/abs(tau);
+          FTLEmin(k) = log(min(Sigma))/abs(tau);
           
       end
       
