@@ -65,40 +65,45 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       Xt = reshape(p(1,:)', size(X));
       Yt = reshape(p(2,:)', size(X));
       
-      [dXtdX, dXtdY] = gradient(Xt);
-      [dYtdX, dYtdY] = gradient(Yt);
       
+      Xi = griddedInterpolant(X,Y,Xt, 'linear');
+      Yi = griddedInterpolant(X,Y,Yt, 'linear');
+      
+      %% Numerically differentiate the interpolants
+      cdiff = @(f, hx, hy) @(x,y)[ ...
+          (f( x+hx,y ) - f(x-hx,y))/2/hx, ...
+          (f( x,y+hy ) - f(x,y-hy))/2/hy ];
+      
+      hx = 1e-6;
+      hy = 1e-6;
+      
+      dX = cdiff( Xi, hx, hy );
+      dY = cdiff( Yi, hx, hy );
       
       %% Compute jacobians and their SVDs at every point
       FTLEmax = nan( size(X) );
       FTLEmin = nan( size(X) );
       
       
-      
       for k = 1:numel(X)
-         
-          J = [dXtdX(k), dXtdY(k);...
-               dYtdX(k), dYtdY(k)];
-          Sigma = sqrt( max(eig(J'*J)) );
+          
+          J = [ dX( X(k), Y(k));...
+              dY( X(k), Y(k)) ];
+          Sigma = sort(eig(J'*J),'descend');
           
           %%%
           % FTLE FORMULA
-          FTLEmax(k) = log(max(Sigma))/abs(tau);
-          FTLEmin(k) = log(min(Sigma))/abs(tau);
+          FTLE = log(Sigma)/abs(tau)/2;
+          FTLEmax(k) = FTLE(1);
+          FTLEmin(k) = FTLE(2);
           
       end
       
       %% Plotting
-            h = imagesc('XData',xi,...
-                        'YData',yi, ...
-                        'CData',FTLEmax');
-      c = colorcube;
-      if tau > 0
-          c = c(39:44,:);
-      else
-          c = c( (39:44)+12,:);
-      end
-      colormap(c);
+      h = imagesc('XData',xi,...
+          'YData',yi, ...
+          'CData',FTLEmax');
+      colormap(bone(128));
       xlim([min(xi),max(xi)]);
       ylim([min(yi),max(yi)]);
       
@@ -112,9 +117,9 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       else
           varargout = {};
       end
-
-
-
+      
+      
+      
     end
 
     function [varargout] = streamline( obj, t, varargin)
@@ -180,7 +185,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 
       %% Use built-in streamline to construct streamlines
       if nargout > 1
-        varargout = {X,Y,U, V};
+        varargout = {X,Y,U,V};
       else
         sel = unique(randi(numel(X),[ceil(parser.Results.nlines),1]));
         for k = 1:numel(t)
