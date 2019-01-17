@@ -130,7 +130,7 @@ classdef InterpolatedODEFlow2D < ContinuousFlows.AbstractODEFlow2D
                                   params.extrapolation);
 
       %% Set up integration parameters
-      obj.integrator = @ode23t;
+      obj.integrator = @ode15s;
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
       %      obj.intprops = odeset(obj.intprops, 'Jacobian', @(t,x)obj.jacobian(t,x) );

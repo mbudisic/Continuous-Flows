@@ -167,7 +167,7 @@ classdef HackbornWeldonRotOsc < ContinuousFlows.AbstractHamiltonian2DFlow
       obj.quadw = W;
 
       %% Set up integration parameters
-      obj.integrator = @ode23t;
+      obj.integrator = @ode15s;
       obj.intprops = odeset;
       obj.intprops = odeset(obj.intprops, 'Vectorized', 'on');
       obj.intprops = odeset(obj.intprops, 'Jacobian', @obj.jacobian);

@@ -2,22 +2,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 %ABSTRACTODEFLOW2D Abstract methods for 2D plots of velocity field.
 
   methods
-      
-    function [varargout] = ftlepw( obj, varargin )
-        
-      parser = inputParser;
-
-      %% Process optional parameters
-      parser.addRequired('tau');
-      parser.addParameter('h', 1e-6); % resolution of the grid at which velocity field is defined
-      parser.addParameter('t0', 0 ); % initial time
-      parser.parse(varargin{:});
-        
-        
-      p = obj.flow(p0, tau, parser.Results.t0 );
-
-        
-    end
+     
     
     function [varargout] = ftle( obj, varargin )
     %FTLE Compute FTLE field with tau integration time.
@@ -53,7 +38,6 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       end
 
       %% Compute 2D grid of velocities
-
       [X,Y] = ndgrid(xi, yi);
       p0 = [X(:),Y(:)].';
 
@@ -61,6 +45,9 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       % Simulate initial conditions for time tau
       p = obj.flow(p0, tau, parser.Results.t0 );
     
+      if ~obj.quiet
+          disp('Computing interpolants')
+      end
       %% Create continuous interpolants
       Xt = reshape(p(1,:)', size(X));
       Yt = reshape(p(2,:)', size(X));
@@ -84,8 +71,11 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       FTLEmax = nan( size(X) );
       FTLEmin = nan( size(X) );
       
-      
-      for k = 1:numel(X)
+      if ~obj.quiet
+          disp('Computing jacobians')
+      end
+
+      parfor k = 1:numel(X)
           
           J = [ dX( X(k), Y(k));...
               dY( X(k), Y(k)) ];
@@ -98,7 +88,11 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
           FTLEmin(k) = FTLE(2);
           
       end
-      
+      %TODO: Compute max eigenvalue of hessian as ridge detector
+      if ~obj.quiet
+          disp('Plotting FTLEs')
+      end
+
       %% Plotting
       h = imagesc('XData',xi,...
           'YData',yi, ...
