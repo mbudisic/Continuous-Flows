@@ -86,7 +86,13 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
       else
           h.FaceColor = 'b';
       end
-            
+      alphamap('rampup')
+      
+      a = alim;
+      a(1) = a(2) - diff(a)*0.5;
+      alim(a);
+      alim('manual');
+
       xlim([min(xi),max(xi)]);
       ylim([min(yi),max(yi)]);
       
