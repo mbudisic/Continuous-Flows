@@ -17,7 +17,7 @@ classdef Duffing < ContinuousFlows.AbstractHamiltonian2DFlow
   methods
 
     function obj = Duffing( dt, flowp )
-    %DUFFING Construct a 2d unforced undamped Duffing oscillator
+    %DUFFING Construct a Duffing oscillator
     % Duffing( dt, alpha, beta )
     %
     % dt    time discretization step
@@ -79,9 +79,9 @@ classdef Duffing < ContinuousFlows.AbstractHamiltonian2DFlow
       Y = x(2,:);
 
       if o == 0
-        out = obj.beta*0.5*X.^2 + obj.alpha*0.25*X.^4+ 0.5*Y.^2 + X.*obj.epsilon*cos(obj.omega*t);
+        out = obj.beta*0.5*X.^2 + obj.alpha*0.25*X.^4 + 0.5*Y.^2 + X.*obj.epsilon*sin(obj.omega*t);
       elseif o == 1
-        out = [obj.beta*X + obj.alpha*X.^3; Y];
+        out = [obj.beta*X + obj.alpha*X.^3 + obj.epsilon*sin(obj.omega*t); Y];
       elseif o == 2
         out = [obj.beta + 3*obj.alpha*X.^2; ... % dxxPsi
                zeros(1,Nx); ... % dxyPsi
