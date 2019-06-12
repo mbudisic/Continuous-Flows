@@ -11,7 +11,7 @@ requires minimal boilerplate code.
 ## How to install
 
 To install the library, `git clone` the repository to a folder and then add
-the directory *containing* `+ContinuousFlows` to MATLAB path.
+the directory *containing* `+ContinuousFlows` to MATLAB path. (Or click on "Download" link and unzip the downloaded file which creates the folder).
 
 For example, if you clone the repository to
 `/Users/mbudisic/Packages/ContinuousFlows` such that directory
