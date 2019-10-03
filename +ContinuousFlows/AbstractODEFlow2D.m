@@ -17,6 +17,8 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
 
     %%
     % Initialize
+    
+    warning('Not fully debugged. Also: slow');
 
       parser = inputParser;
 
@@ -835,7 +837,7 @@ classdef (Abstract) AbstractODEFlow2D < ContinuousFlows.AbstractODEFlow
     function Points = samplePolygonInterior( obj, N, polygon )
     %SAMPLEPOLYGONINTERIOR Return a sample of initial conditions inside the polygon.
     %
-    % Points = obj.samplePolygonBoundary( N, polygon, samplefun )
+    % Points = obj.samplePolygonBoundary( N, polygon )
     % Returns a 2 x N matrix of points sampled on the inside of the
     % polygon (2 x M matrix), using sample-and-reject technique.
     %
