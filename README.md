@@ -22,3 +22,7 @@ add the package to MATLAB's path by
 After installing, you can check that the package is installed by running `doc
 ContinuousFlows` which should give you a summary of the flows available in the
 package.
+
+## Demonstration
+
+Open and run `demo.m` for demonstration of basic use of the package.
