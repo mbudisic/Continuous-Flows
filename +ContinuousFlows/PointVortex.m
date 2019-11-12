@@ -44,7 +44,7 @@ classdef PointVortex < ContinuousFlows.AbstractODEFlow
             
             % position vectors are now row vectors in a matrix
             rx = reshape( px, [], 2 );
-            ry = reshape( py, obj.N, 2 );
+            ry = reshape( py, [], 2 );
             
             % position vectors are now row/column tensors
             % where the coordinate index is the third dimension
@@ -58,11 +58,9 @@ classdef PointVortex < ContinuousFlows.AbstractODEFlow
             
             sel = L < obj.core;
             L(sel) = inf;
-            D1 = D(:,:,1)./(L.^2);
-            D2 = D(:,:,2)./(L.^2);
-            
+
             % Now, Biot-Savart produces vectors orthogonal to D
-            V = ( cat(3, -D2, D1 ) ) ...
+            V = ( cat(3, -D(:,:,2), D(:,:,1) ) )./(L.^2) ...
                 .* obj.gamma /2/pi;
             
             % what is left is to sum along columns
