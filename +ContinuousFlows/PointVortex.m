@@ -38,7 +38,7 @@ classdef PointVortex < ContinuousFlows.AbstractODEFlow
             dr = obj.biotsavart( r, r );
         end
         
-        function [vx, Psix] = biotsavart( obj, px, py )
+        function [vx, Psix,V] = biotsavart( obj, px, py )
             % BIOTSAVART Use Biot-Savart law to determine velocity at px
             % based on vortices placed at py
             
@@ -55,21 +55,26 @@ classdef PointVortex < ContinuousFlows.AbstractODEFlow
             D = Rx - Ry; % Nx x Ny x 2 - vectors pointing from y to x
             L = vecnorm(D, 2, 3);
             
-            
+            % regularization - velocity is zero inside the vortex (should
+            % probably implement something else) - this amounts to
+            % "capping" the stream function
             sel = L < obj.core;
             L(sel) = -inf;
+            
+            
 
-            % Now, Biot-Savart produces vectors orthogonal to D
+            % Now, Biot-Savart produces velocity vectors orthogonal to D
             V = ( cat(3, -D(:,:,2), D(:,:,1) ) )./(L.^2) ...
                 .* obj.gamma /2/pi;
             
-            Psi = -log(L).*obj.gamma/2/pi;
             
-            % what is left is to sum along columns
             Vx = permute( sum( V, 2 ), [1,3,2] );
+            vx = reshape( Vx, [], 1); % make into column
+            
+            % Similarly, we can use the vortex 
+            Psi = -log(L).*obj.gamma/2/pi;            
             Psix = squeeze( sum(Psi, 2) );
             
-            vx = reshape( Vx, [], 1); % make into column
             
         end
     end
